@@ -1,2 +1,2 @@
 # Grad School Life
-Examples of my work from Phd program.
+Examples of work from my PhD program.
