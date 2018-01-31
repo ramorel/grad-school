@@ -21,8 +21,8 @@ len(ids_1) + len(ids_2) + len(ids_3) + len(ids_4)
 
 
 # Prepare API call to Facebook
-app_id = '173430183186975'
-app_secret = 'a52bef71d6f940cf6d50af5c86775174'
+app_id = 'REDACTED'
+app_secret = 'REDACTED'
 
 def get_fb_token(app_id, app_secret):
     payload = {'grant_type': 'client_credentials', 'client_id': app_id, 'client_secret': app_secret}
@@ -90,18 +90,6 @@ for i in gens_2:
 len(posts_2)
 [len(p) for p in posts_2]
 
-# posts_2[0] = '141680156005331'
-# posts_2[1] = '211021932327048'
-# posts_2[2] = '919482254795282'
-# posts_2[3] = '1408400549375189'
-# posts_2[4] = '195585637128093'
-# posts_2[5] = '637911876408075'
-# posts_2[6] = '908368225945135'
-# posts_2[7] = '243277169072113'
-# posts_2[8] = '1442000276026038'
-# posts_2[9] = '1533170270278932'
-# posts_2[10] = '446780315402578'
-
 
 with open('posts_2.txt', 'w') as outfile:
     json.dump(posts_2, outfile)
@@ -162,30 +150,3 @@ len(posts_4)
 
 with open('posts_4.txt', 'w') as outfile:
     json.dump(posts_4, outfile)
-
-
-
-
-
-
-t = [[item for sublist in p for item in sublist] for p in posts_1]
-t = [item for sublist in t for item in sublist]
-t = [json_normalize(i) for i in t]
-
-comments_list = []
-for i in t:
-    idn = i['id'][0][0:15]
-    d = i['comments.data']
-    df = pd.DataFrame([])
-    for row in d:
-        if len(row) == 0:
-            continue
-        c = pd.DataFrame.from_dict(json_normalize(row), orient='columns')
-        c['group_id'] = idn
-        df = df.append(c)
-    comments.append(df)
-
-t[1].head()
-t[1][['created_time', 'id', 'likes.summary.total_count', 'link', 'message', 'shares.count', 'type']].head()
-
-t[1].iloc[:,[7,8,15,16,17,18,19]].head()
