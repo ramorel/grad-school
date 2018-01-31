@@ -58,13 +58,9 @@ This takes a while.
 ```{r model, message = F}
 model <- ergm(faux.desert.high ~ edges + mutual + 
                     intransitive +
-                    gwesp(0.75, T) + 
-                    gwdsp(1, T) +
-                    nodematch("grade", diff = T), 
-              control=control.ergm(MCMC.samplesize = 1000,
-                                   MCMC.burnin = 1000, 
-                                   MCMC.interval = 1000, 
-                                   parallel = 2)
+                    gwesp(0.1, T) + 
+                    gwdsp(0.1, T) +
+                    nodematch("grade"))
         
 summary(model)
 ```
@@ -88,16 +84,24 @@ To do this, we need to simulate some networks based on the parameters in the mod
 model_sim <- simulate(model, 
                       nsim = 1000, 
                       seed = 47, 
-                      basis = model)
+                      basis = faux.desert.high)
 
 model_tridist <- map_dbl(model_sim, ~ summary(. ~ triangle))
-
-ggplot() +
-  geom_density(model_tridist, aes(x = triangle)) +
-  geom_vline(xintercept = summary(model ~ triangle))
+model_tridist %>% 
+  as_data_frame() %>% 
+  ggplot() +
+  geom_density(aes(x = value)) +
+  geom_vline(xintercept = summary(faux.desert.high ~ triangle))
 ```
 
-Ok, looks good. Now I can proceed with the brokerage test. Here's the basic process:
+
+Ok, not too bad. Let's see where the observed value falls in the distribution.
+
+```{r}
+ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
+```
+
+Now I can proceed with the brokerage test. Here's the basic process:
 
 1) Specify an exponential random graph model to form the baseline. (Done.)
 2) Evaluate the model fit to the data. (Done.)
@@ -110,9 +114,9 @@ I condition the distribution on grade-level for a couple reason. First, we proba
 
 ```{r brokerage scores from simulated networks}
 brkrg_sim <- map(model_sim, ~brokerage(., . %v% "grade")) %>% 
-  map(., `[[`, "raw.nli") %>% 
-  map(., ~bind_cols(as.data.frame(.), 
-                    . %v% "grade")) %>% 
+  map(`[[`, "raw.nli") %>%
+  map(as_data_frame) %>% 
+  map(., ~ mutate(., grade = faux.desert.high %v% "grade")) %>% 
   bind_rows(.)
 ```
 
@@ -122,11 +126,12 @@ Now for each simulated network, I have a brokerage score in each brokerage role 
 dist <- brkrg_sim %>% 
   group_by(grade) %>% 
   sample_n(1000) %>%
-  split(., .$sector)
+  split(., .$grade)
 
 obs <- brkrg %>% 
   as_data_frame() %>% 
-  mutate(grade = faux.desert.high %v% "grade") %>% 
+  mutate(grade = faux.desert.high %v% "grade",
+         id = faux.desert.high %v% "vertex.names") %>% 
   split(., .$grade)
 ```
 
@@ -137,3 +142,113 @@ head(dist[[1]])
 head(obs[[1]])
 ```
 
+Let's continue to explore by comparing some observed scores to the simulated distributions.
+
+```{r explore the distributions}
+set.seed(83)
+t <- obs[[1]] %>% select(w_I) %>% sample_n(1) %>% pull()
+
+ggplot(dist[[1]]) +
+  geom_density(aes(x = w_I)) +
+  geom_vline(xintercept = t, linetype = 2)
+
+set.seed(35)
+t <- obs[[3]] %>% select(b_OI) %>% sample_n(1) %>% pull()
+
+ggplot(dist[[3]]) +
+  geom_density(aes(x = b_OI)) +
+  geom_vline(xintercept = t, linetype = 2)
+```
+
+To test incidence of brokerage, I need to compare each node's score for each brokerage role to the simulated distributions -- all of this conditioning on grade level. The code below is not pretty but gets the job done.
+
+```{r}
+w_I <- list()
+for (i in 1:length(dist)){
+  w_I[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_I >= obs[[i]]$w_I[x]))
+}
+w_O <- list()
+for (i in 1:length(dist)){
+  w_O[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_O >= obs[[i]]$w_O[x]))
+}
+b_IO <- list()
+for (i in 1:length(dist)){
+  b_IO[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_IO >= obs[[i]]$b_IO[x]))
+}
+b_OI <- list()
+for (i in 1:length(dist)){
+  b_OI[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_OI >= obs[[i]]$b_OI[x]))
+}
+b_O <- list()
+for (i in 1:length(dist)){
+  b_O[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_O >= obs[[i]]$b_O[x]))
+}
+t <- list()
+for (i in 1:length(dist)){
+  t[[i]] <- map_dbl(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$t >= obs[[i]]$t[x]))
+}
+
+b_scores <- data.frame(Name = bind_rows(obs)[,"id"],
+                       Coordinator = unlist(w_I),
+                       Consultant = unlist(w_O),
+                       Representative = unlist(b_IO),
+                       Gatekeeper = unlist(b_OI),
+                       Liaison = unlist(b_O),
+                       Total = unlist(t),
+                       stringsAsFactors = F)
+
+head(b_scores)
+```
+
+So those are all percentile ranks for each node's brokerage score in each role. We have to choose an alpha as the cutoff for significance. I used 0.05 in my paper, but I could see an argument for 0.01. I will create a dummy variable for each row where 1 indicate the node occupies a brokerage role and 0 otherwise. 
+```{r}
+brokers <- b_scores %>% 
+  mutate_at(vars(Coordinator:Total), funs(if_else(. <= 0.01, 1, 0))) %>% 
+  transmute(id = as.numeric(id), 
+            broker = if_else(rowSums(select(., Coordinator:Total)) == 0, 0, 1)) %>% 
+  arrange(id)
+
+faux.desert.high %v% "broker" <- brokers$broker
+```
+
+Let's take a look at here those brokers are. I'm going to increase the size of broker nodes so that they are easy to spot.
+
+```{r visualize brokers, message = F}
+faux.desert.high %v% "size" <- if_else(faux.desert.high %v% "broker" == 1, 5, 1)
+
+ggraph(faux.desert.high) +
+  geom_node_point(aes(colour = factor(grade), size = size)) +
+  geom_edge_fan(colour = "grey40", alpha = 0.25) +
+  theme_void()
+```
+
+As suspected, most of the brokering activities occur in the middle grades -- the high schoolers who probably have the most incentive to form friendships across grades. The seventh graders are new and so stick together; the seniors are pretty much checked out. This make me curious about how heterogeneous the ego networks of the brokers are. I like the _network range_ algorithm developed by Burt (1982) and used by nicely by Reagans and McEvily (2002). It is a measure of the divserity of an actor's network ties. [I coded the algorithm in R myself](https://github.com/ramorel/network-range), since none of the network packages in R have it baked in. It's a bit of an obscure measure, so that's probably why. I give a more detailed explanation in the [README](https://github.com/ramorel/network-range/blob/master/README.md) for the repository. Put succinctly -- an ego's network range increases under two conditions: (1) the more ties they have to others in different groups; and (2) the extent to which the individuals in those groups are loosely connected. An ego network with a lot of range is one where an actor has connections to many groups that are loosely connected.
+
+I'll import the function (called `netrange`) from GitHub.
+
+```{r get netrange, message = F, include = F}
+library(RCurl)
+
+script <- getURL("https://raw.githubusercontent.com/ramorel/network-range/master/network_range.R", ssl.verifypeer = FALSE)
+
+eval(parse(text = script))
+```
+
+The function has three arguments: network, attr (the grouping variable) and directed (which defaults to TRUE). `NaN` is returned for isolates. The scores range from 0 to 1, with 1 indicating the most diversity.
+
+```{r network range, message = F}
+brokers <- brokers %>% 
+  mutate(range = netrange(faux.desert.high, faux.desert.high %v% "grade"))
+
+head(brokers)
+```
+
+Let's compare the brokers and non-brokers on range scores.
+```{r}
+brokers %>% 
+  group_by(broker) %>% 
+  summarize(mean_range = mean(range, na.rm = T),
+            sd_range = sd(range, na.rm = T))
+```
+
+Indeed the brokers have greater mean range scores. 
