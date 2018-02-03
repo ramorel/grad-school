@@ -2,7 +2,7 @@
 title: "Tria research qualifying paper - sample data"
 author: "Richard Paquin Morel"
 date: "1/30/2018"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +22,7 @@ library(ggraph)
 
 
 
-I will use the "faux.desert.high" network, which approximates the structure the network used for my study. It is directed, has 107 nodes (compared to 84) and a density of 0.04 (compared to 0.07)
+I will use the "faux.desert.high" network, which approximates the structure the network used for my study. It is directed, has 107 nodes (compared to 84) and a density of 0.04 (compared to 0.07).
 
 ```{r faux.desert.high}
 data("faux.desert.high")

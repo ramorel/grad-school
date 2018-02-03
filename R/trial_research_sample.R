@@ -129,17 +129,13 @@ brokerage_test <- function(simulations, observed_network, group_attibute, p.valu
   return(b_names)
 }
 
-brokerage_test(sim.)
+brokerage_test(model_sim)
 
 ####Derive G&F brokerage scores from simulated networks####
-library(purrr)
-library(dplyr)
-brkg <- map(sim.m1, ~brokerage(., mad.attr$sector)) %>% 
-  map(., `[[`, "raw.nli") %>% 
-  map(., ~bind_cols(as.data.frame(.), 
-                    mad.attr[,c("sector", 
-                                "role",
-                                "pri.org")])) %>% 
+brkrg_sim <- map(model_sim, ~brokerage(., . %v% "grade")) %>% 
+  map(`[[`, "raw.nli") %>%
+  map(as_data_frame) %>% 
+  map(., ~ mutate(., grade = faux.desert.high %v% "grade")) %>% 
   bind_rows(.)
 
 ####deriving probability distributions from simulations, draws for 1000####
@@ -155,17 +151,25 @@ obs <- mad.attr %>%
          t) %>% 
   split(., .$sector)
 
+for (i in dist) {
+  for (j in 1:6) {
+    map(obs, ~ ecdf(i[, j])(.x[, j]))
+  }
+}
+map(dist, ~ {
+  map(obs, ~ ecdf(dist[[1]]$w_I)(.x$w_I))
+})
 w_I <- list()
 for (i in 1:length(dist)){
-  w_I[[i]] <- sapply(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_I >= obs[[i]]$w_I[x]))
+  w_I[[i]] <- map_int(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_I >= obs[[i]]$w_I[x]))
 }
 w_O <- list()
 for (i in 1:length(dist)){
-  w_O[[i]] <- sapply(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_O >= obs[[i]]$w_O[x]))
+  w_O[[i]] <- map_int(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$w_O >= obs[[i]]$w_O[x]))
 }
 b_IO <- list()
 for (i in 1:length(dist)){
-  b_IO[[i]] <- sapply(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_IO >= obs[[i]]$b_IO[x]))
+  b_IO[[i]] <- map_int(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_IO >= obs[[i]]$b_IO[x]))
 }
 b_OI <- list()
 for (i in 1:length(dist)){
@@ -173,11 +177,11 @@ for (i in 1:length(dist)){
 }
 b_O <- list()
 for (i in 1:length(dist)){
-  b_O[[i]] <- sapply(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_O >= obs[[i]]$b_O[x]))
+  b_O[[i]] <- map_int(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$b_O >= obs[[i]]$b_O[x]))
 }
 t <- list()
 for (i in 1:length(dist)){
-  t[[i]] <- sapply(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$t >= obs[[i]]$t[x]))
+  t[[i]] <- map_int(1:nrow(obs[[i]]), function(x) mean(dist[[i]]$t >= obs[[i]]$t[x]))
 }
 
 b_scores <- data.frame(Name = bind_rows(obs)[,1],
