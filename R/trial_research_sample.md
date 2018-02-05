@@ -9,9 +9,11 @@ My dissertation uses data that I cannot publicly share. So I will use a
 publicly available set to demonstrate this code. The `ergm` pack has a
 number of sample social networks. First, load the relevant libraries.
 
-I will use the “faux.desert.high” network, which approximates the
+I will use the `faux.desert.high` network, which approximates the
 structure the network used for my study. It is directed, has 107 nodes
-(compared to 84) and a density of 0.04 (compared to 0.07).
+(compared to 84) and a density of 0.04 (compared to 0.07). This is a
+simulated high school friendship network, using parameters estimated
+from real-life friendship networks in the AddHealth dataset.
 
 ``` r
 data("faux.desert.high")
@@ -56,7 +58,11 @@ summary(faux.desert.high, print.adj = FALSE)
     ## 
     ## No edge attributes
 
-Let’s take a quick look at the networks, using the [`ggraph`
+Not a particularly large high school, with only 107 students. The
+network in my study consisted of 84 professionals involved in providing
+learning professional learning opportunities to K-12 teachers.
+
+Let’s take a quick look at the network using the [`ggraph`
 package](https://github.com/thomasp85/ggraph). `ggraph` is rapidly
 becoming my go-to for network visualization. It’s clean, intuitive, and
 based on `ggplot2`.
@@ -72,14 +78,29 @@ ggraph(faux.desert.high) +
 
 ## Brokerage and model specification
 
-My study explores inter- and intra-organization brokering. For this
-network, I will use grade as the grouping variable for measuring
-brokerage. The measure of brokerage I use comes from Gould and
-Fernandez’s seminal 1989 paper in *Sociological Methododology*. The
-`brokerage` function yields several measures – I only want the raw
-brokerage scores. This score is a count of the number of times a node
-mediates between two otherwise unconnected
-nodes.
+My study explores inter- and intra-organization brokering. Put simply,
+brokering occurs when a individual has social connections to two other
+people who are not connected themselves. A whole line of research has
+theorized and docuements the benefits of occupying brokerage positions.
+For my study, I was interested in how influential individuals shared and
+gathered information.
+
+The measure of brokerage I use comes from Gould and Fernandez’s seminal
+1989 paper in *Sociological Methododology*. I use this method because it
+exploits group membership within a network to define brokering. Gould
+and Fernandez define five specific brokerage roles based on the group
+membership of the broker and the two other people they broker between.
+I’m not going to bother defining them here, but basically they come
+down to are you brokering between groups or within groups. The
+`brokerage` function from the `sna` package yields several measures – I
+only want the raw brokerage scores, stored in `raw.nil`. This score is a
+count of the number of times a node mediates between two otherwise
+unconnected nodes.
+
+For this network, I will use grade as the grouping variable for
+measuring brokerage. For my actual study, I used membership in an
+organizational
+sector.
 
 ``` r
 brkrg <- brokerage(faux.desert.high, faux.desert.high %v% "grade")$raw.nli
@@ -94,22 +115,30 @@ head(brkrg)
     ## 5   0   0    0    0   0  0
     ## 6   0   0    0    0   0  0
 
-I use an exponential random graph model of the network to form a
+This returns a matrix with six columns representing the five brokerage
+roles and a total column, which is a sum of the five other columns.
+
+I used an exponential random graph model of the network to form a
 baseline model. From this baseline model, I will simulate 1,000 networks
 that will form the distribution against which I will compared the
 observed values The model selection is iterative. Here are the
-parameters I use:  
-\- nodematch(“grade”). Based on homophily theory, I figure that ties are
-more likely to form within than between grades. I will allow for the
-possibility of differential homophily, as older grades may be less
-likely to show grade-level homophily  
-\- mutual. From balance theory, we know that friendship ties are usually
-reciprocated.  
-\- gwesp. A measure triadic closure. Friends of friends are often
-friends. The decay is iteratively choosen to improve model fit  
-\- gwdsp. A measure of triadic openness. This captures brokerage.
+parameters I use:
 
-This takes a while.
+  - nodematch(“grade”). Based on homophily theory, I figure that ties
+    are more likely to form within than between grades. I will allow for
+    the possibility of differential homophily, as older grades may be
+    less likely to show grade-level homophily  
+  - mutual. From balance theory, we know that friendship ties are
+    usually reciprocated.  
+  - gwesp. A measure triadic closure. Friends of friends are often
+    friends. The decay is iteratively choosen to improve model fit  
+  - gwdsp. A measure of triadic openness. This captures brokerage.
+
+The estimation of ergm parameters can take a while. For the actually
+study, I crank some of the MCMC tuning parameters to ensure good mixing
+and the locating of an adequate sample space. It takes a few hours to
+run on my MBA. Here, I use the default settings and it runs in a few
+minutes. Still, maybe get a drink or use the restroom.
 
 ``` r
 model <- ergm(faux.desert.high ~ edges + mutual + 
@@ -132,20 +161,20 @@ summary(model)
     ## Iterations:  2 out of 20 
     ## 
     ## Monte Carlo MLE Results:
-    ##                 Estimate Std. Error MCMC % p-value    
-    ## edges           -4.58307    0.17081      0 < 1e-04 ***
-    ## mutual           1.69788    0.19860      0 < 1e-04 ***
-    ## intransitive     0.03633    0.01668      0 0.02940 *  
-    ## gwesp.fixed.0.1  1.21791    0.10265      0 < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.08391    0.02726      0 0.00209 ** 
-    ## nodematch.grade  1.32409    0.11720      0 < 1e-04 ***
+    ##                 Estimate Std. Error MCMC %  p-value    
+    ## edges           -4.58411    0.16878      0  < 1e-04 ***
+    ## mutual           1.69007    0.20506      0  < 1e-04 ***
+    ## intransitive     0.04339    0.01389      0 0.001794 ** 
+    ## gwesp.fixed.0.1  1.21716    0.10308      0  < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.09157    0.02377      0 0.000118 ***
+    ## nodematch.grade  1.32449    0.11911      0  < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ##      Null Deviance: 15723  on 11342  degrees of freedom
-    ##  Residual Deviance:  2625  on 11336  degrees of freedom
+    ##  Residual Deviance:  2626  on 11336  degrees of freedom
     ##  
-    ## AIC: 2637    BIC: 2681    (Smaller is better.)
+    ## AIC: 2638    BIC: 2682    (Smaller is better.)
 
 After specifying and estimating the model, it is critical to assess its
 fit to the data and to diagnose any issues in the Markov Chain Monte
@@ -200,7 +229,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.315
+    ## [1] 0.299
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -259,12 +288,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1 21.0      0  0    11.0   0    32.0      7
-    ## 2 32.0      0  0    29.0   0    61.0      7
-    ## 3 24.0      0  6.00  6.00  1.00 37.0      7
-    ## 4  1.00     0  3.00  2.00  1.00  7.00     7
-    ## 5 33.0      0  0    12.0   0    45.0      7
-    ## 6  6.00     0  0     5.00  0    11.0      7
+    ## 1 21.0   0     0    14.0   0    35.0      7
+    ## 2 71.0   0     0    11.0   0    82.0      7
+    ## 3  3.00  0     2.00  0     0     5.00     7
+    ## 4 24.0   1.00  5.00 25.0   2.00 57.0      7
+    ## 5  7.00  0     6.00  4.00  2.00 19.0      7
+    ## 6 27.0   0     0    10.0   0    37.0      7
 
 ``` r
 head(obs[[1]])
@@ -349,12 +378,12 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.111          1          0.153      1.000   1.000 0.172
-    ## 2 12       0.210          1          0.169      1.000   1.000 0.266
-    ## 3 15       0.456          1          1.000      0.438   1.000 0.554
-    ## 4 19       0.728          1          0.585      0.438   0.367 0.683
-    ## 5 24       0.671          1          1.000      1.000   1.000 0.829
-    ## 6 34       0.286          1          0.116      0.494   1.000 0.238
+    ## 1  7       0.139          1          0.119      1.000   1.000 0.193
+    ## 2 12       0.236          1          0.128      1.000   1.000 0.282
+    ## 3 15       0.445          1          1.000      0.423   1.000 0.529
+    ## 4 19       0.685          1          0.551      0.423   0.355 0.650
+    ## 5 24       0.636          1          1.000      1.000   1.000 0.777
+    ## 6 34       0.295          1          0.089      0.468   1.000 0.256
 
 So those are all percentile ranks for each node’s brokerage score in
 each role. We have to choose an alpha as the cutoff for significance. I
@@ -439,7 +468,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.458    0.230
-    ## 2   1.00      0.568    0.239
+    ## 1   0         0.466    0.229
+    ## 2   1.00      0.526    0.271
 
 Indeed the brokers have greater mean range scores.

@@ -22,14 +22,16 @@ library(ggraph)
 
 
 
-I will use the "faux.desert.high" network, which approximates the structure the network used for my study. It is directed, has 107 nodes (compared to 84) and a density of 0.04 (compared to 0.07).
+I will use the `faux.desert.high` network, which approximates the structure the network used for my study. It is directed, has 107 nodes (compared to 84) and a density of 0.04 (compared to 0.07). This is a simulated high school friendship network, using parameters estimated from real-life friendship networks in the AddHealth dataset. 
 
 ```{r faux.desert.high}
 data("faux.desert.high")
 summary(faux.desert.high, print.adj = FALSE)
 ```
 
-Let's take a quick look at the networks, using the [`ggraph` package](https://github.com/thomasp85/ggraph). `ggraph` is rapidly becoming my go-to for network visualization. It's clean, intuitive, and based on `ggplot2`.
+Not a particularly large high school, with only 107 students. The network in my study consisted of 84 professionals involved in providing learning professional learning opportunities to K-12 teachers. 
+
+Let's take a quick look at the network using the [`ggraph` package](https://github.com/thomasp85/ggraph). `ggraph` is rapidly becoming my go-to for network visualization. It's clean, intuitive, and based on `ggplot2`.
 
 ```{r visualization, message = F}
 ggraph(faux.desert.high) +
@@ -40,20 +42,27 @@ ggraph(faux.desert.high) +
 
 ## Brokerage and model specification
 
-My study explores inter- and intra-organization brokering. For this network, I will use grade as the grouping variable for measuring brokerage. The measure of brokerage I use comes from Gould and Fernandez's seminal 1989 paper in _Sociological Methododology_. The `brokerage` function yields several measures --  I only want the raw brokerage scores. This score is a count of the number of times a node mediates between two otherwise unconnected nodes.
+My study explores inter- and intra-organization brokering. Put simply, brokering occurs when a individual has social connections to two other people who are not connected themselves. A whole line of research has theorized and docuements the benefits of occupying brokerage positions. For my study, I was interested in how influential individuals shared and gathered information.
+
+The measure of brokerage I use comes from Gould and Fernandez's seminal 1989 paper in _Sociological Methododology_. I use this method because it exploits group membership within a network to define brokering. Gould and Fernandez define five specific brokerage roles based on the group membership of the broker and the two other people they broker between. I'm not going to bother defining them here, but basically they come down to are you brokering between groups or within groups. The `brokerage` function from the `sna` package yields several measures --  I only want the raw brokerage scores, stored in `raw.nil`. This score is a count of the number of times a node mediates between two otherwise unconnected nodes. 
+
+For this network, I will use grade as the grouping variable for measuring brokerage. For my actual study, I used membership in an organizational sector. 
 
 ```{r brokerage}
 brkrg <- brokerage(faux.desert.high, faux.desert.high %v% "grade")$raw.nli
 head(brkrg)
 ```
 
-I use an exponential random graph model of the network to form a baseline model. From this baseline model, I will simulate 1,000 networks that will form the distribution against which  I will compared the observed values The model selection is iterative. Here are the parameters I use:     
+This returns a matrix with six columns representing the five brokerage roles and a total column, which is a sum of the five other columns.
+
+I used an exponential random graph model of the network to form a baseline model. From this baseline model, I will simulate 1,000 networks that will form the distribution against which  I will compared the observed values The model selection is iterative. Here are the parameters I use:  
+
   - nodematch("grade"). Based on homophily theory, I figure that ties are more likely to form within than between grades. I will allow for the possibility of differential homophily, as older grades may be less likely to show grade-level homophily     
   - mutual. From balance theory, we know that friendship ties are usually reciprocated.     
   - gwesp. A measure triadic closure. Friends of friends are often friends. The decay is iteratively choosen to improve model fit   
   - gwdsp. A measure of triadic openness. This captures brokerage.
 
-This takes a while.
+The estimation of ergm parameters can take a while. For the actually study, I crank some of the MCMC tuning parameters to ensure good mixing and the locating of an adequate sample space. It takes a few hours to run on my MBA. Here, I use the default settings and it runs in a few minutes. Still, maybe get a drink or use the restroom.
 
 ```{r model, message = F}
 model <- ergm(faux.desert.high ~ edges + mutual + 
