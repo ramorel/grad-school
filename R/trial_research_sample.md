@@ -9,6 +9,13 @@ My dissertation uses data that I cannot publicly share. So I will use a
 publicly available set to demonstrate this code. The `ergm` pack has a
 number of sample social networks. First, load the relevant libraries.
 
+``` r
+library(statnet)
+library(ggplot2)
+library(tidyverse)
+library(ggraph)
+```
+
 I will use the `faux.desert.high` network, which approximates the
 structure the network used for my study. It is directed, has 107 nodes
 (compared to 84) and a density of 0.04 (compared to 0.07). This is a
@@ -162,19 +169,19 @@ summary(model)
     ## 
     ## Monte Carlo MLE Results:
     ##                 Estimate Std. Error MCMC % p-value    
-    ## edges           -4.56079    0.17959      0 < 1e-04 ***
-    ## mutual           1.69710    0.19484      0 < 1e-04 ***
-    ## intransitive     0.03869    0.01960      0 0.04839 *  
-    ## gwesp.fixed.0.1  1.21360    0.10234      0 < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.08857    0.03018      0 0.00335 ** 
-    ## nodematch.grade  1.31333    0.12064      0 < 1e-04 ***
+    ## edges           -4.56994    0.16667      0 < 1e-04 ***
+    ## mutual           1.68784    0.19673      0 < 1e-04 ***
+    ## intransitive     0.03863    0.01915      0 0.04366 *  
+    ## gwesp.fixed.0.1  1.22111    0.10219      0 < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.08810    0.02941      0 0.00274 ** 
+    ## nodematch.grade  1.31187    0.11753      0 < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ##      Null Deviance: 15723  on 11342  degrees of freedom
-    ##  Residual Deviance:  2625  on 11336  degrees of freedom
+    ##  Residual Deviance:  2624  on 11336  degrees of freedom
     ##  
-    ## AIC: 2637    BIC: 2681    (Smaller is better.)
+    ## AIC: 2636    BIC: 2680    (Smaller is better.)
 
 After specifying and estimating the model, it is critical to assess its
 fit to the data and to diagnose any issues in the Markov Chain Monte
@@ -229,7 +236,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.085
+    ## [1] 0.38
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -288,12 +295,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1 16.0      0  0     0        0 16.0      7
-    ## 2  5.00     0  4.00  0        0  9.00     7
-    ## 3 23.0      0  0    15.0      0 38.0      7
-    ## 4 76.0      0  0    11.0      0 87.0      7
-    ## 5 13.0      0  4.00  0        0 17.0      7
-    ## 6 32.0      0  8.00  6.00     0 46.0      7
+    ## 1 22.0   0     0     4.00  0    26.0      7
+    ## 2  7.00  0    14.0   6.00  3.00 30.0      7
+    ## 3  2.00  1.00  3.00  2.00  0     8.00     7
+    ## 4 34.0   0    14.0   9.00  2.00 59.0      7
+    ## 5  2.00  0     0     0     0     2.00     7
+    ## 6  9.00  0     0     3.00  0    12.0      7
 
 ``` r
 head(obs[[1]])
@@ -378,12 +385,12 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.128          1          0.112      1.000   1.000 0.177
-    ## 2 12       0.219          1          0.123      1.000   1.000 0.268
-    ## 3 15       0.429          1          1.000      0.476   1.000 0.562
-    ## 4 19       0.719          1          0.568      0.476   0.369 0.678
-    ## 5 24       0.668          1          1.000      1.000   1.000 0.840
-    ## 6 34       0.282          1          0.085      0.515   1.000 0.242
+    ## 1  7       0.099          1          0.139      1.000   1.000 0.155
+    ## 2 12       0.206          1          0.151      1.000   1.000 0.257
+    ## 3 15       0.418          1          1.000      0.408   1.000 0.524
+    ## 4 19       0.701          1          0.549      0.408   0.355 0.651
+    ## 5 24       0.636          1          1.000      1.000   1.000 0.820
+    ## 6 34       0.279          1          0.096      0.471   1.000 0.224
 
 So those are all percentile ranks for each node’s brokerage score in
 each role. We have to choose an alpha as the cutoff for significance. I
@@ -468,7 +475,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.456    0.233
-    ## 2   1.00      0.584    0.207
+    ## 1   0         0.450    0.231
+    ## 2   1.00      0.585    0.210
 
 Indeed the brokers have greater mean range scores.
