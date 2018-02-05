@@ -168,20 +168,20 @@ summary(model)
     ## Iterations:  2 out of 20 
     ## 
     ## Monte Carlo MLE Results:
-    ##                 Estimate Std. Error MCMC % p-value    
-    ## edges           -4.56994    0.16667      0 < 1e-04 ***
-    ## mutual           1.68784    0.19673      0 < 1e-04 ***
-    ## intransitive     0.03863    0.01915      0 0.04366 *  
-    ## gwesp.fixed.0.1  1.22111    0.10219      0 < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.08810    0.02941      0 0.00274 ** 
-    ## nodematch.grade  1.31187    0.11753      0 < 1e-04 ***
+    ##                 Estimate Std. Error MCMC %  p-value    
+    ## edges           -4.47763    0.17632      0  < 1e-04 ***
+    ## mutual           1.72722    0.18177      0  < 1e-04 ***
+    ## intransitive     0.04670    0.01211      0 0.000115 ***
+    ## gwesp.fixed.0.1  1.21966    0.10338      0  < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.10789    0.01913      0  < 1e-04 ***
+    ## nodematch.grade  1.25626    0.12238      0  < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ##      Null Deviance: 15723  on 11342  degrees of freedom
-    ##  Residual Deviance:  2624  on 11336  degrees of freedom
+    ##  Residual Deviance:  2626  on 11336  degrees of freedom
     ##  
-    ## AIC: 2636    BIC: 2680    (Smaller is better.)
+    ## AIC: 2638    BIC: 2682    (Smaller is better.)
 
 After specifying and estimating the model, it is critical to assess its
 fit to the data and to diagnose any issues in the Markov Chain Monte
@@ -236,7 +236,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.38
+    ## [1] 0.307
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -295,12 +295,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1 22.0   0     0     4.00  0    26.0      7
-    ## 2  7.00  0    14.0   6.00  3.00 30.0      7
-    ## 3  2.00  1.00  3.00  2.00  0     8.00     7
-    ## 4 34.0   0    14.0   9.00  2.00 59.0      7
-    ## 5  2.00  0     0     0     0     2.00     7
-    ## 6  9.00  0     0     3.00  0    12.0      7
+    ## 1 18.0   0    13.0   7.00  2.00 40.0      7
+    ## 2 50.0   0     9.00  0     0    59.0      7
+    ## 3  5.00  0     0     4.00  0     9.00     7
+    ## 4 26.0   0     6.00  6.00  1.00 39.0      7
+    ## 5 20.0   1.00  7.00  6.00  0    34.0      7
+    ## 6  8.00  0     0     0     0     8.00     7
 
 ``` r
 head(obs[[1]])
@@ -385,18 +385,17 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.099          1          0.139      1.000   1.000 0.155
-    ## 2 12       0.206          1          0.151      1.000   1.000 0.257
-    ## 3 15       0.418          1          1.000      0.408   1.000 0.524
-    ## 4 19       0.701          1          0.549      0.408   0.355 0.651
-    ## 5 24       0.636          1          1.000      1.000   1.000 0.820
-    ## 6 34       0.279          1          0.096      0.471   1.000 0.224
+    ## 1  7       0.145          1          0.153      1.000   1.000 0.204
+    ## 2 12       0.280          1          0.173      1.000   1.000 0.311
+    ## 3 15       0.528          1          1.000      0.454   1.000 0.626
+    ## 4 19       0.787          1          0.582      0.454   0.357 0.730
+    ## 5 24       0.749          1          1.000      1.000   1.000 0.860
+    ## 6 34       0.353          1          0.128      0.511   1.000 0.280
 
 So those are all percentile ranks for each node’s brokerage score in
-each role. We have to choose an alpha as the cutoff for significance. I
-used 0.05 in my paper, but I could see an argument for 0.01. I will
-create a dummy variable for each row where 1 indicate the node occupies
-a brokerage role and 0 otherwise.
+each role. We have to choose an alpha as the cutoff for significance. In
+this case, I use 0.01. I will create a dummy variable for each row where
+1 indicate the node occupies a brokerage role and 0 otherwise.
 
 ``` r
 brokers <- b_scores %>% 
@@ -475,7 +474,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.450    0.231
-    ## 2   1.00      0.585    0.210
+    ## 1   0         0.448    0.229
+    ## 2   1.00      0.619    0.204
 
 Indeed the brokers have greater mean range scores.

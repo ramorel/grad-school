@@ -209,7 +209,7 @@ b_scores <- data.frame(Name = bind_rows(obs)[,"id"],
 head(b_scores)
 ```
 
-So those are all percentile ranks for each node's brokerage score in each role. We have to choose an alpha as the cutoff for significance. I used 0.05 in my paper, but I could see an argument for 0.01. I will create a dummy variable for each row where 1 indicate the node occupies a brokerage role and 0 otherwise. 
+So those are all percentile ranks for each node's brokerage score in each role. We have to choose an alpha as the cutoff for significance. In this case, I use 0.01. I will create a dummy variable for each row where 1 indicate the node occupies a brokerage role and 0 otherwise. 
 ```{r}
 brokers <- b_scores %>% 
   mutate_at(vars(Coordinator:Total), funs(if_else(. <= 0.01, 1, 0))) %>% 
