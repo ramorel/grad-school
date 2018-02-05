@@ -1,6 +1,6 @@
 ---
-title: "Tria research qualifying paper - sample data"
-author: "rpm"
+title: "Trial research qualifying paper - sample data"
+author: "Richard Paquin Morel"
 date: "1/30/2018"
 output: github_document
 ---

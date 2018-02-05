@@ -1,6 +1,6 @@
-Tria research qualifying paper - sample data
+Trial research qualifying paper - sample data
 ================
-rpm
+Richard Paquin Morel
 1/30/2018
 
 ## Background and data
@@ -158,23 +158,23 @@ summary(model)
     ## Formula:   faux.desert.high ~ edges + mutual + intransitive + gwesp(0.1, 
     ##     T) + gwdsp(0.1, T) + nodematch("grade")
     ## 
-    ## Iterations:  3 out of 20 
+    ## Iterations:  2 out of 20 
     ## 
     ## Monte Carlo MLE Results:
     ##                 Estimate Std. Error MCMC % p-value    
-    ## edges           -4.57921    0.16894      0 < 1e-04 ***
-    ## mutual           1.69416    0.20098      0 < 1e-04 ***
-    ## intransitive     0.03814    0.01724      0 0.02697 *  
-    ## gwesp.fixed.0.1  1.21346    0.09940      0 < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.08582    0.02721      0 0.00161 ** 
-    ## nodematch.grade  1.31586    0.11630      0 < 1e-04 ***
+    ## edges           -4.56079    0.17959      0 < 1e-04 ***
+    ## mutual           1.69710    0.19484      0 < 1e-04 ***
+    ## intransitive     0.03869    0.01960      0 0.04839 *  
+    ## gwesp.fixed.0.1  1.21360    0.10234      0 < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.08857    0.03018      0 0.00335 ** 
+    ## nodematch.grade  1.31333    0.12064      0 < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ##      Null Deviance: 15723  on 11342  degrees of freedom
-    ##  Residual Deviance:  2626  on 11336  degrees of freedom
+    ##  Residual Deviance:  2625  on 11336  degrees of freedom
     ##  
-    ## AIC: 2638    BIC: 2682    (Smaller is better.)
+    ## AIC: 2637    BIC: 2681    (Smaller is better.)
 
 After specifying and estimating the model, it is critical to assess its
 fit to the data and to diagnose any issues in the Markov Chain Monte
@@ -229,7 +229,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.386
+    ## [1] 0.085
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -288,12 +288,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1  4.00     0  0     0     0     4.00     7
-    ## 2  9.00     0  0     0     0     9.00     7
-    ## 3 24.0      0 27.0   9.00  7.00 67.0      7
-    ## 4 19.0      0 18.0   0     0    37.0      7
-    ## 5  3.00     0  2.00  5.00  2.00 12.0      7
-    ## 6 79.0      0 10.0   0     0    89.0      7
+    ## 1 16.0      0  0     0        0 16.0      7
+    ## 2  5.00     0  4.00  0        0  9.00     7
+    ## 3 23.0      0  0    15.0      0 38.0      7
+    ## 4 76.0      0  0    11.0      0 87.0      7
+    ## 5 13.0      0  4.00  0        0 17.0      7
+    ## 6 32.0      0  8.00  6.00     0 46.0      7
 
 ``` r
 head(obs[[1]])
@@ -378,12 +378,12 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.095          1          0.124      1.000   1.000 0.145
-    ## 2 12       0.179          1          0.136      1.000   1.000 0.229
-    ## 3 15       0.383          1          1.000      0.401   1.000 0.511
-    ## 4 19       0.655          1          0.567      0.401   0.374 0.621
-    ## 5 24       0.603          1          1.000      1.000   1.000 0.777
-    ## 6 34       0.236          1          0.093      0.471   1.000 0.201
+    ## 1  7       0.128          1          0.112      1.000   1.000 0.177
+    ## 2 12       0.219          1          0.123      1.000   1.000 0.268
+    ## 3 15       0.429          1          1.000      0.476   1.000 0.562
+    ## 4 19       0.719          1          0.568      0.476   0.369 0.678
+    ## 5 24       0.668          1          1.000      1.000   1.000 0.840
+    ## 6 34       0.282          1          0.085      0.515   1.000 0.242
 
 So those are all percentile ranks for each node’s brokerage score in
 each role. We have to choose an alpha as the cutoff for significance. I
@@ -468,7 +468,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.452    0.229
-    ## 2   1.00      0.587    0.226
+    ## 1   0         0.456    0.233
+    ## 2   1.00      0.584    0.207
 
 Indeed the brokers have greater mean range scores.
