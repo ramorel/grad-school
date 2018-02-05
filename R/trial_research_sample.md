@@ -1,6 +1,6 @@
 Tria research qualifying paper - sample data
 ================
-Richard Paquin Morel
+rpm
 1/30/2018
 
 ## Background and data
@@ -124,15 +124,15 @@ that will form the distribution against which I will compared the
 observed values The model selection is iterative. Here are the
 parameters I use:
 
-  - nodematch(“grade”). Based on homophily theory, I figure that ties
+  - *nodematch(“grade”)*. Based on homophily theory, I figure that ties
     are more likely to form within than between grades. I will allow for
     the possibility of differential homophily, as older grades may be
     less likely to show grade-level homophily  
-  - mutual. From balance theory, we know that friendship ties are
+  - *mutual*. From balance theory, we know that friendship ties are
     usually reciprocated.  
-  - gwesp. A measure triadic closure. Friends of friends are often
+  - *gwesp*. A measure triadic closure. Friends of friends are often
     friends. The decay is iteratively choosen to improve model fit  
-  - gwdsp. A measure of triadic openness. This captures brokerage.
+  - *gwdsp*. A measure of triadic openness. This captures brokerage.
 
 The estimation of ergm parameters can take a while. For the actually
 study, I crank some of the MCMC tuning parameters to ensure good mixing
@@ -158,16 +158,16 @@ summary(model)
     ## Formula:   faux.desert.high ~ edges + mutual + intransitive + gwesp(0.1, 
     ##     T) + gwdsp(0.1, T) + nodematch("grade")
     ## 
-    ## Iterations:  2 out of 20 
+    ## Iterations:  3 out of 20 
     ## 
     ## Monte Carlo MLE Results:
-    ##                 Estimate Std. Error MCMC %  p-value    
-    ## edges           -4.58411    0.16878      0  < 1e-04 ***
-    ## mutual           1.69007    0.20506      0  < 1e-04 ***
-    ## intransitive     0.04339    0.01389      0 0.001794 ** 
-    ## gwesp.fixed.0.1  1.21716    0.10308      0  < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.09157    0.02377      0 0.000118 ***
-    ## nodematch.grade  1.32449    0.11911      0  < 1e-04 ***
+    ##                 Estimate Std. Error MCMC % p-value    
+    ## edges           -4.57921    0.16894      0 < 1e-04 ***
+    ## mutual           1.69416    0.20098      0 < 1e-04 ***
+    ## intransitive     0.03814    0.01724      0 0.02697 *  
+    ## gwesp.fixed.0.1  1.21346    0.09940      0 < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.08582    0.02721      0 0.00161 ** 
+    ## nodematch.grade  1.31586    0.11630      0 < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
@@ -229,7 +229,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.299
+    ## [1] 0.386
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -288,12 +288,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1 21.0   0     0    14.0   0    35.0      7
-    ## 2 71.0   0     0    11.0   0    82.0      7
-    ## 3  3.00  0     2.00  0     0     5.00     7
-    ## 4 24.0   1.00  5.00 25.0   2.00 57.0      7
-    ## 5  7.00  0     6.00  4.00  2.00 19.0      7
-    ## 6 27.0   0     0    10.0   0    37.0      7
+    ## 1  4.00     0  0     0     0     4.00     7
+    ## 2  9.00     0  0     0     0     9.00     7
+    ## 3 24.0      0 27.0   9.00  7.00 67.0      7
+    ## 4 19.0      0 18.0   0     0    37.0      7
+    ## 5  3.00     0  2.00  5.00  2.00 12.0      7
+    ## 6 79.0      0 10.0   0     0    89.0      7
 
 ``` r
 head(obs[[1]])
@@ -378,12 +378,12 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.139          1          0.119      1.000   1.000 0.193
-    ## 2 12       0.236          1          0.128      1.000   1.000 0.282
-    ## 3 15       0.445          1          1.000      0.423   1.000 0.529
-    ## 4 19       0.685          1          0.551      0.423   0.355 0.650
-    ## 5 24       0.636          1          1.000      1.000   1.000 0.777
-    ## 6 34       0.295          1          0.089      0.468   1.000 0.256
+    ## 1  7       0.095          1          0.124      1.000   1.000 0.145
+    ## 2 12       0.179          1          0.136      1.000   1.000 0.229
+    ## 3 15       0.383          1          1.000      0.401   1.000 0.511
+    ## 4 19       0.655          1          0.567      0.401   0.374 0.621
+    ## 5 24       0.603          1          1.000      1.000   1.000 0.777
+    ## 6 34       0.236          1          0.093      0.471   1.000 0.201
 
 So those are all percentile ranks for each node’s brokerage score in
 each role. We have to choose an alpha as the cutoff for significance. I
@@ -468,7 +468,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.466    0.229
-    ## 2   1.00      0.526    0.271
+    ## 1   0         0.452    0.229
+    ## 2   1.00      0.587    0.226
 
 Indeed the brokers have greater mean range scores.

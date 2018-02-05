@@ -1,6 +1,6 @@
 ---
 title: "Tria research qualifying paper - sample data"
-author: "Richard Paquin Morel"
+author: "rpm"
 date: "1/30/2018"
 output: github_document
 ---
@@ -57,10 +57,10 @@ This returns a matrix with six columns representing the five brokerage roles and
 
 I used an exponential random graph model of the network to form a baseline model. From this baseline model, I will simulate 1,000 networks that will form the distribution against which  I will compared the observed values The model selection is iterative. Here are the parameters I use:  
 
-  - nodematch("grade"). Based on homophily theory, I figure that ties are more likely to form within than between grades. I will allow for the possibility of differential homophily, as older grades may be less likely to show grade-level homophily     
-  - mutual. From balance theory, we know that friendship ties are usually reciprocated.     
-  - gwesp. A measure triadic closure. Friends of friends are often friends. The decay is iteratively choosen to improve model fit   
-  - gwdsp. A measure of triadic openness. This captures brokerage.
+  - _nodematch("grade")_. Based on homophily theory, I figure that ties are more likely to form within than between grades. I will allow for the possibility of differential homophily, as older grades may be less likely to show grade-level homophily     
+  - _mutual_. From balance theory, we know that friendship ties are usually reciprocated.     
+  - _gwesp_. A measure triadic closure. Friends of friends are often friends. The decay is iteratively choosen to improve model fit   
+  - _gwdsp_. A measure of triadic openness. This captures brokerage.
 
 The estimation of ergm parameters can take a while. For the actually study, I crank some of the MCMC tuning parameters to ensure good mixing and the locating of an adequate sample space. It takes a few hours to run on my MBA. Here, I use the default settings and it runs in a few minutes. Still, maybe get a drink or use the restroom.
 
