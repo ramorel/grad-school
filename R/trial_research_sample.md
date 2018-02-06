@@ -3,11 +3,19 @@ Trial research qualifying paper - sample data
 Richard Paquin Morel
 1/30/2018
 
-## Background and data
+## Background
 
-My dissertation uses data that I cannot publicly share. So I will use a
-publicly available set to demonstrate this code. The `ergm` pack has a
-number of sample social networks. First, load the relevant libraries.
+For my PhD qualifying paper, I studied how influential actors in social networks access and share information. I used a combination of network analysis and qualitative analysis. The specific content area was professional development providers in mathematics. PD providers work with K-12 teachers to help them learn new policies and to develop their teaching abilities. They work closely with teachers and so can a profound influence on the kind of information they receive about new policies. With the widespread adoption of the [Common Core State Standards](http://www.corestandards.org/), teachers will likely learning about the standards from PD providers.
+
+## The problem
+
+Working on my empirics, I knew I wanted a way to cleanly distinguish providers in influential positions from those that did not. I did not want an arbitrary cutoff, like those in the 90th percentile of some measure of network influence. I chose to focus on individuals in brokerage positions, because there is a strong line of research about the privileges of brokering. So, I can up with a test of brokerage using exponential random graph models as the baseline and a well-established measure of brokerage from [Gould and Fernandez's 1989 paper "Structures of Mediation: A Formal Approach to Brokerage in Transaction Networks ](https://www.jstor.org/stable/270949).
+
+This is the R code for my approach.
+
+## Testing incidence of brokering in a network
+
+My PhD qualifying paper uses data that I cannot publicly share. So I will use a publicly available set to demonstrate this code. The `ergm` pack has a number of sample social networks. First, load the relevant libraries.
 
 ``` r
 library(statnet)
@@ -477,4 +485,6 @@ brokers %>%
     ## 1   0         0.448    0.229
     ## 2   1.00      0.619    0.204
 
-Indeed the brokers have greater mean range scores.
+Indeed the brokers have greater mean range scores, which suggests that they have access to more diverse information. From the theory of brokerage, we'd expect that.
+
+Now, in my acutal study, I drew on qualitative data to illustrate how brokers _used_ their position to access and share information. I found that brokers based in different organizational settings enacted their privileged position in differet ways. Basically, brokers based in school districts spent a lot of time accessing important information on mathematics teaching and learning, but not a lot of time sharing it. Rather, they spent a lot of time sharing logistical information -- about budgets, personnel, and the like. Brokers who worked outside of school districts -- in non-profits, universities -- accessed and shared important information about mathematics teaching and learning. So I conclude they had greater potential to shape the ideas that teachers had access to in professional development sessions.
