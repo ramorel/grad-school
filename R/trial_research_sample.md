@@ -94,7 +94,7 @@ ggraph(faux.desert.high) +
 ## Brokerage and model specification
 
 My study explores inter- and intra-organization brokering. Put simply,
-brokering occurs when a individual has social connections to two other
+brokering occurs when an individual has social connections to two other
 people who are not connected themselves. A whole line of research has
 theorized and docuements the benefits of occupying brokerage positions.
 For my study, I was interested in how influential individuals shared and
