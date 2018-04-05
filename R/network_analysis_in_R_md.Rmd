@@ -1,0 +1,545 @@
+---
+title: "Northwestern R Users Group: Network Analysis in R"
+author: "Richard Paquin Morel"
+date: "April 5, 2018"
+output: github_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+```
+
+### What is network analysis?
+
+- Relational analysis
+- The unit of analysis is, at minimum, a _dyad_, some relationship among some entities
+- Relevant to a variety of fields -- social sciences, engineering, computer science, biological and physical sciences, mathematics, etc.
+
+### Special challenges for network analysis
+
+- Data format and storage is complex
+- Computationally expensive
+- Standard assumptions of statistical analysis often do not hold
+  - Problems of, e.g., autocorrelation
+
+#### Data format and storage is complex
+
+- Object representing relationships among entities (e.g., advice seeking among colleagues in a school)
+- Object representing attributes of entities (e.g,. characteristics of those colleagues)
+
+#### Example
+```{r example network, echo = T, message = F, warning = F}
+library(tidyverse)
+library(ggraph)
+data(faux.desert.high, package = "ergm")
+ggraph(faux.desert.high) +
+  geom_node_point(aes(color = as.factor(grade)), alpha = 1) +
+  geom_edge_link(alpha = 0.2) +
+  guides(color = guide_legend("Grade")) +
+  theme_void()
+```
+
+#### Computationally expensive
+
+A directed network with...
+
+- 3 nodes $\rightarrow$ $2^{3(3-1)} = 64$ possible networks
+- 10 nodes $\rightarrow$ $2^{10(10-1)} = 1.2379 * 10^{27}$ possible networks
+- 25 nodes $\rightarrow$ $2^{600} >$ the estimated number of atoms in the universe
+
+
+#### Violation of standard statistical assumptions
+
+- Observations in networks are inherently interdependent
+- Probability of ties is not unconditional
+- The formation of a tie in a network impacts the probability of the formation of ties throughout the entire network
+
+### Housekeeping 
+
+#### Some vocabulary
+
+| Thing         | Graph Theory Term | Social Network Term|
+|---------------|-------------------|--------------------|
+| Entity        | Vertex            | Node, actor        |
+| Relationship  | Edge              | Tie                |
+| Set of entities and relationships | Graph | Network    |
+| Nature of relationship | Graph/digraph | Undirected/directed |
+
+- If the relationship has some inherent directionality (e.g., "goes to for advice"), it is called a _directed_ network, or digraph. If not it is an _undirected_ network, or graph
+
+#### What I will talk about
+
+- The nitty gritty of network analysis in R
+  - The high points and low points of the two big network packages - igraph and the statnet suite of packages
+  - Importing data
+  - Manipulating data
+  - Key functions from these packages
+  - Visualization
+  
+### Network analysis in R: igraph vs. statnet
+
+#### `igraph`
+- Data handling/manipulation/visualization
+- Comprehensive set of functions for graph theory and network analysis
+- Python and C editions
+- Extensive support on Stack Overflow
+
+#### `statnet`
+  
+- A suite of packages
+  - Data handling/manipulation/visualization --> `network`
+  - Standard tools for network analysis --> `sna`
+  - Tools for statistical inference --> `ergm` (and extensions), `latentnet`
+  - Etc. --> `EpiModel` for epidemic modeling
+
+#### Which to use?
+- Probably both
+  - `statnet` --> social networks and statistical models of networks
+  - `igraph` --> graph theory and mathematical models of graphs
+- `statnet` created and maintained by statisticians and sociologists
+- `igraph` created and maintained by computer scientists
+
+### How are networks represented?
+
+- Several formats -- adjacency matrix, edgelist, incidence matrix
+
+#### The adjacency matrix
+
+- An _n_ by _n_ matrix where rows/columns represent entities and each _i, j_ cell represents the present or absence of a relationship between _i_ and _j_.
+```{r load packages and data, message = F, echo = T}
+
+### load packages I will use statnet for now.
+
+library(tidyverse)
+library(statnet)
+
+data("faux.desert.high") # a fake dataset of friendships in a high school simulated from real data
+net <- faux.desert.high # giving it an easier name
+```
+
+```{r adjacency matrix}
+as.matrix(net)[7:20, 7:20]
+```
+
+#### The edgelist
+
+- A two-column data frame with a "To" and "From" column where each row represent a relationship between two entities.
+
+```{r edgelist}
+as.edgelist(net)[1:10, ]
+```
+
+### Importing and manipulating network data
+
+#### Prepping data...
+
+```{r prepping data for importing, echo = T}
+data(faux.desert.high)
+adj_matrix <- as.matrix(faux.desert.high)
+el <- as.edgelist(faux.desert.high) %>% 
+  as.data.frame()
+colnames(el) <- c("to", "from")
+dhs_attr <- data_frame(id = paste("DHS", net %v% "vertex.names", sep = "_"),
+                        grade = net %v% "grade",
+                        race = net %v% "race",
+                        sex = net %v% "sex")
+colnames(adj_matrix) <- dhs_attr$id
+rownames(adj_matrix) <- dhs_attr$id
+el <- 
+  el %>% 
+  transmute(to = dhs_attr$id[match(el$to, rownames(dhs_attr))],
+            from = dhs_attr$id[match(el$from, rownames(dhs_attr))])
+```
+
+- Three objects:
+  - `adj_matrix` - an adjacency matrix representing friendships among students at Desert High
+  - `el` - an edgelist with the same information
+  - `dhs_attr` - a data frame of student attributes 
+  
+```{r data to import}
+glimpse(dhs_attr)
+```
+
+#### `statnet` approach
+
+- Create a network object: `network` or `as.network`
+
+
+```{r}
+### network(x, 
+###         vertex.attr=NULL, 
+###         vertex.attrnames=NULL, 
+###         directed=TRUE, 
+###         hyper=FALSE, loops=FALSE, multiple=FALSE, bipartite = FALSE, ...)
+```
+
+- `x` can be either an adjacency matrix or an edgelist
+
+#### `statnet` approach
+
+```{r statnet import}
+library(statnet)
+
+net <- network(adj_matrix)
+net
+```
+
+#### `statnet` approach
+```{r import with attributes}
+network(adj_matrix, 
+        vertex.attr = list(dhs_attr$grade,
+                           dhs_attr$race,
+                           dhs_attr$sex),
+        vertex.attrnames = list("grade", 
+                                "race",
+                                "sex"))
+```
+
+#### `igraph` approach
+
+- `graph_from_*` syntax
+- For adjacency matrices: `graph_from_adjacency_matrix`
+- For edgelists: `graph_from_edgelist` or `graph_from_data_frame`
+
+```{r igraph import, message = F, warning = F}
+library(igraph)
+
+g <- graph_from_adjacency_matrix(adj_matrix)
+g
+```
+
+### A word of caution, re: edgelists
+
+#### Edgelists
+- Edgelists do not have information for entities with no relationships (isolates)
+
+```{r edgelists}
+graph_from_data_frame(el)
+```
+
+#### Add the missing nodes
+
+```{r add missing nodes}
+el_net <- graph_from_data_frame(el)
+dhs_attr$id[which(!dhs_attr$id %in% V(el_net)$name)]
+el_net <- igraph::add_vertices(el_net, 7,
+                     name = dhs_attr$id[which(!dhs_attr$id %in% V(el_net)$name)])
+```
+
+### Manipulating networks
+
+- Each package has its own special syntax for interacting with networks
+
+#### Accessing and manipulating attributes
+
+|package    | class     | vertices | edges | networks |
+|-----------|-----------|----------|-------|----------|
+| `statnet` | "network" | `%v%`    | `%e%` | `%n%`    |
+| `igraph`  | "igraph"  | `V()`    | `E()` | `$`      |
+
+
+#### In `statnet`
+```{r manipulating network objects}
+net <- network(adj_matrix)
+network::list.vertex.attributes(net)
+
+net %v% "race" <- dhs_attr$race
+net %v% "grade" <- dhs_attr$grade
+net %v% "grade"
+```
+
+#### In `igraph`...
+
+```{r manipulating igraph objects}
+vertex_attr_names(g)
+
+V(g)$race <- dhs_attr$race
+V(g)$grade <- dhs_attr$grade
+V(g)$grade
+```
+
+#### Subsetting networks
+
+- Various reasons to subset a network 
+  - Sub-network of friendships among 8th graders
+  - Sub-network of friendships for informal subgroups
+- `igraph::induced_subgraph(network, vertices)`
+- `statnet` - `network %s% vertices`
+
+#### Subsetting
+
+```{r subsetting}
+induced_subgraph(g, which(V(g)$grade == 8))
+
+### net %s% which((net %v% "grade") == 8)
+### if `igraph` is loaded:
+### network::`%s%`(net, which((net %v% "grade") == 8))
+```
+
+
+### Sampling random networks
+
+#### `igraph` is the real winner here
+
+- `igraph` has many (>30) functions for producing random graphs
+- Syntax - `sample_*`
+- Scale free, uniform probability, small world, Erdös-Rényi, preferential attachment, etc., etc.
+
+#### A scale-free network
+```{r}
+samp_g <- sample_pa(100)
+qplot(igraph::degree(samp_g), geom = "density")
+```
+
+#### An Erdös-Rényi or Bernoulli network
+```{r}
+samp_g <- sample_gnp(100, 0.25)
+qplot(igraph::degree(samp_g), geom = "density")
+```
+
+#### `statnet` has options...
+
+- Just not as many or as robust
+- `rgraph` --> Bernoulli
+- `rgnm` --> conditioned on density
+- `rguman` --> conditioned on dyad census
+
+### Key network measures
+
+#### Both packages have all standard network measures
+
+- Node-level indices - Properties of vertices
+  - Centrality
+- Graph-level indices - Properties of networks
+  - Density, centralization, dyad and triad censuses
+- Subgraph and community detection
+  - Blockmodels, cliques, components, communities
+  
+#### Node-level indicies
+
+- Centrality captures the prominence, relative importance, influence of a vertex
+- Most basic is degree centrality -- how many edges does a vertex have? How active is a person? How popular?
+  - Is the network directed or undirected?
+
+```{r centrality}
+### sna::degree(net, cmode = "freeman")
+igraph::degree(g, mode = "total")
+```
+
+#### Node level indices, continued
+
+- Betweenness centrality is a bit more nuanced: How often does a vertex lies on the shortest path between any two given vertices?
+  - I.e., you have to pass through _k_ to get from _i_ to _j_
+  - A vertex with high betweenness -> mediating between others, ability to control information flow, e.g.
+- Many different flavors of betweenness
+  - `igraph` has two: original (vertex betweenness) and edge betweenness
+  - `statnet` has many more
+  - Borgatti, S. P., & Everett, M. G. (2006). A Graph-theoretic perspective on centrality. Social Networks, 28(4), 466–484.
+
+#### Betweenness
+
+```{r betweenness}
+igraph::betweenness(g, directed = T)
+### sna::betweenness(net, cmode = "directed")
+```
+
+#### Others, not discussed
+
+- Many other nuanced measures of centrality
+  - Eigenvector, closeness, Bonacich
+  - Both packages have these measures
+  
+### Graph-level Indices
+
+#### Properties of networks as a whole
+
+- _Density_ - Total edges in a network : total possible number of edges
+
+$$ Possible \ edges \ =n * (n-1) \ or \ \frac{1}{2} n * (n - 1) $$
+
+- _Centralization_ - How much "inequality" is there in centrality scores in a network?
+  - Measured relative to a theoretical maximum for inequality
+
+```{r star network, echo = T, message = F, fig.asp=0.5}
+make_star(10) %>% 
+  ggraph() +
+  geom_node_point() +
+  geom_edge_link(alpha = 0.2) +
+  theme_void()
+```
+
+#### `igraph` and `statnet` play a bit better here...
+
+```{r graph-level}
+### igraph
+edge_density(g)
+
+### statnet 
+gden(net)
+```
+
+#### For centralization...
+
+- `igraph` has individual functions with a prefix `centr_*`
+- `statnet` has one function with many options
+
+```{r centralization}
+### igraph
+centr_degree(g)
+
+### statnet
+### centralization(net, degree)
+```
+
+#### Subgraphs, communities
+
+- `igraph` is vastly superior here -- has everything `statnet` has and more
+- Many ways to determine cohesive communities within a network
+  - Cliques, cores, plexes
+  - Blockmodels, community detection
+
+#### Community detection in `igraph`
+
+- `cluster_*` prefix
+- Computationally expensive
+- Directedness of network often matters (with directed networks much more taxing)
+
+```{r community}
+fg <- cluster_fast_greedy(as.undirected(g))
+fg
+
+V(g)$mem <- fg$membership
+
+
+```
+
+#### Visualization of communities
+
+```{r community map, message = F, echo = T, fig.width = 8, fig.height= 6}
+ggraph(g) +
+  geom_node_point(aes(color = as.factor(mem))) +
+  geom_edge_link(alpha = 0.2) +
+  theme_void() +
+  guides(color=guide_legend(title="membership"))
+```
+
+### Visualization
+
+#### So many options...
+
+- Goals of network visualization: 
+  - Create an easy to interpret and meaningful image of the network
+  - Display attributes of vertices, edges
+- Both `igraph` and `statnet` support visualiztions of networks
+  - `igraph` (IMO) is produces better visualizations
+  - Check out the help file -- many, many arguments and options, lots to tweak
+
+#### Basics
+
+- Three basics parameters for visualizing networks...
+  - Layout - how are the vertices and edges arranged?
+  - Vertices - color, size
+  - Edges - color, size, transparency, arrows
+- Invaluable resource: [http://kateto.net/network-visualization](http://kateto.net/network-visualization)
+
+#### Layouts
+
+- "Fixed" arrangements like circles, grids, trees
+- Algorithmic layouts - treat networks as physical systems
+  - Fruchterman-Reingold is a popular one
+  - Very fiddly
+- Choose based on what you are trying to communicate with the network
+  - If you want "related" vertices to cluster, use an algorithmic approach
+
+#### Layouts
+- Hot tip: say the layout you want for multiple visualizations
+  - `igraph` prefix: `layout_*`
+
+```{r layouts with igraph}
+l <- layout_with_fr(g)
+head(l)
+```
+
+#### Multiple plots, same layout
+  
+```{r same layout, echo = T, fig.width = 8, fig.height = 5}
+par(mfrow=c(1,3), mar=c(1, 1, 1, 1))
+plot(g, layout = l, 
+     vertex.color = V(g)$grade, vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Grade")
+plot(g, layout = l, vertex.color = as.factor(V(g)$race), 
+     vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Race")
+plot(g, layout = l, 
+     vertex.color = as.factor(V(g)$sex), vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Sex")
+```
+
+#### Visualization in `igraph`
+
+- `plot()` function
+- Key arguments
+  - `layout = ...`
+  - Everything related to vertices uses the prefix `vertex.`
+    - `vertex.size`, `vertex.color`
+  - Everything related to edges uses the prefix `edges.`
+    - `edge.color`, `edge.width`, `edge.arrow.size`
+
+```{r igraph visualization, results=F}
+par(mfrow=c(1,3), mar=c(1, 1, 1, 1))
+plot(g, layout = l, 
+     vertex.color = V(g)$grade, vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Grade")
+plot(g, layout = l, vertex.color = as.factor(V(g)$race), 
+     vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Race")
+plot(g, layout = l, 
+     vertex.color = as.factor(V(g)$sex), vertex.label = NA, vertex.size = 5,
+     edge.arrow.size = 0.5, main = "Sex")
+```
+
+#### There isn't full overlap in parameters
+
+```{r igraph vs statnet visualization, fig.width = 8, fig.height = 5}
+par(mfrow=c(1,2), mar=c(1, 1, 1, 1))
+plot(fg, g, layout = l, vertex.color = V(g)$grade, vertex.label = NA, vertex.size = 5, edge.arrow.size = 0.5, edge.color = "gray50", main = "Communities")
+plot(net, vertex.col = (net %v% "grade"), edge.col = "gray50", usecurve = T, edge.curve = 0.01, main = "Curved edges")
+```
+
+#### A newcomer...`ggraph`
+
+- `ggraph` is new visualization package built on the grammar of graphics idiom
+  - Actually, there are several (`ggnet`, `ggnet2`, `ggnetwork`)
+- Incorporates network visualiation into `ggplot2`
+- `ggraph(graph, layout) + geom_node_* + geom_edge_*`
+- Much easier, if you are familiar with `ggplot2` already
+
+#### Visualization with `ggraph`
+
+```{r ggraph}
+library(ggraph)
+ggraph(g, layout = "nicely") +  # works with igraph and statnet objects
+  geom_node_point(aes(color = as.factor(grade))) +
+  geom_edge_link(alpha = 0.2)
+```
+
+#### The power of `ggplot2`!
+
+```{r ggraph facet}
+library(ggraph)
+ggraph(g, layout = "nicely") +  # works with igraph and statnet objects
+  geom_node_point(aes(color = as.factor(grade))) +
+  geom_edge_link(alpha = 0.2) +
+  facet_nodes(~grade)
+```
+
+### Resources
+
+- Basic network analysis
+  - Hannenman & Riddle online textbook: http://faculty.ucr.edu/~hanneman/nettext/
+- Visualization
+  - Katya Ognyanova's guide: http://kateto.net/network-visualization
+  - Thomas Lin Pedersen's guide to `ggraph`: https://www.data-imaginist.com/2017/ggraph-introduction-layouts/
+- Statnet users group: http://www.statnet.org/statnet_users_group.shtml
+- Stack Overflow's 'igraph' tag
