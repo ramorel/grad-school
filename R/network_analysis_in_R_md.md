@@ -29,6 +29,8 @@ April 5, 2018
 #### Example
 
 ``` r
+# install.packages(c("igraph", "statnet", "ggraph"))
+
 library(tidyverse)
 library(ggraph)
 data(faux.desert.high, package = "ergm")
@@ -300,9 +302,9 @@ g <- graph_from_adjacency_matrix(adj_matrix)
 g
 ```
 
-    ## IGRAPH 7e5a616 DN-- 107 439 -- 
+    ## IGRAPH 180b9d1 DN-- 107 439 -- 
     ## + attr: name (v/c)
-    ## + edges from 7e5a616 (vertex names):
+    ## + edges from 180b9d1 (vertex names):
     ##  [1] DHS_1 ->DHS_58  DHS_1 ->DHS_76  DHS_1 ->DHS_84  DHS_1 ->DHS_109
     ##  [5] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_90  DHS_3 ->DHS_105
     ##  [9] DHS_4 ->DHS_13  DHS_4 ->DHS_77  DHS_5 ->DHS_110 DHS_6 ->DHS_60 
@@ -326,9 +328,9 @@ g
 graph_from_data_frame(el)
 ```
 
-    ## IGRAPH f1b7ac1 DN-- 100 439 -- 
+    ## IGRAPH 1fd8abc DN-- 100 439 -- 
     ## + attr: name (v/c)
-    ## + edges from f1b7ac1 (vertex names):
+    ## + edges from 1fd8abc (vertex names):
     ##  [1] DHS_1 ->DHS_58  DHS_1 ->DHS_76  DHS_1 ->DHS_84  DHS_1 ->DHS_109
     ##  [5] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_90  DHS_3 ->DHS_105
     ##  [9] DHS_4 ->DHS_13  DHS_4 ->DHS_77  DHS_5 ->DHS_110 DHS_6 ->DHS_60 
@@ -420,9 +422,9 @@ V(g)$grade
 induced_subgraph(g, which(V(g)$grade == 8))
 ```
 
-    ## IGRAPH 0170023 DN-- 15 58 -- 
+    ## IGRAPH 5029eb7 DN-- 15 58 -- 
     ## + attr: name (v/c), race (v/c), grade (v/n)
-    ## + edges from 0170023 (vertex names):
+    ## + edges from 5029eb7 (vertex names):
     ##  [1] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_105 DHS_26->DHS_30 
     ##  [5] DHS_26->DHS_59  DHS_26->DHS_107 DHS_30->DHS_3   DHS_30->DHS_26 
     ##  [9] DHS_30->DHS_41  DHS_30->DHS_43  DHS_30->DHS_59  DHS_30->DHS_73 
@@ -757,13 +759,13 @@ l <- layout_with_fr(g)
 head(l)
 ```
 
-    ##            [,1]      [,2]
-    ## [1,] -3.9918994 -4.397702
-    ## [2,] -3.2761428  4.392553
-    ## [3,]  0.2094077 -2.803142
-    ## [4,] -0.2490742  1.864972
-    ## [5,]  8.9410000 -1.690966
-    ## [6,] -4.4691592  3.991211
+    ##          [,1]       [,2]
+    ## [1,] 6.837502  0.5215649
+    ## [2,] 8.767679 -5.0078819
+    ## [3,] 1.545537 -0.7017186
+    ## [4,] 3.259611 -2.9121120
+    ## [5,] 2.522257  8.6743963
+    ## [6,] 9.376037 -3.5148039
 
 #### Multiple plots, same layout
 
