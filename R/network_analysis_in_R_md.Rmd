@@ -30,6 +30,8 @@ knitr::opts_chunk$set(echo = T)
 
 #### Example
 ```{r example network, echo = T, message = F, warning = F}
+# install.packages(c("igraph", "statnet", "ggraph"))
+
 library(tidyverse)
 library(ggraph)
 data(faux.desert.high, package = "ergm")
