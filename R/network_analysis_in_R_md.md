@@ -79,7 +79,7 @@ network
   - The nitty gritty of network analysis in R
       - The high points and low points of the two big network packages -
         igraph and the statnet suite of packages
-      - Importing data
+      - Creating data
       - Manipulating data
       - Key functions from these packages
       - Visualization
@@ -175,7 +175,7 @@ as.edgelist(net)[1:10, ]
     ##  [9,]    4   13
     ## [10,]    4   75
 
-### Importing and manipulating network data
+### Creating and manipulating network data
 
 #### Prepping data…
 
@@ -300,9 +300,9 @@ g <- graph_from_adjacency_matrix(adj_matrix)
 g
 ```
 
-    ## IGRAPH 08c38d3 DN-- 107 439 -- 
+    ## IGRAPH 7e5a616 DN-- 107 439 -- 
     ## + attr: name (v/c)
-    ## + edges from 08c38d3 (vertex names):
+    ## + edges from 7e5a616 (vertex names):
     ##  [1] DHS_1 ->DHS_58  DHS_1 ->DHS_76  DHS_1 ->DHS_84  DHS_1 ->DHS_109
     ##  [5] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_90  DHS_3 ->DHS_105
     ##  [9] DHS_4 ->DHS_13  DHS_4 ->DHS_77  DHS_5 ->DHS_110 DHS_6 ->DHS_60 
@@ -326,9 +326,9 @@ g
 graph_from_data_frame(el)
 ```
 
-    ## IGRAPH 2d028a5 DN-- 100 439 -- 
+    ## IGRAPH f1b7ac1 DN-- 100 439 -- 
     ## + attr: name (v/c)
-    ## + edges from 2d028a5 (vertex names):
+    ## + edges from f1b7ac1 (vertex names):
     ##  [1] DHS_1 ->DHS_58  DHS_1 ->DHS_76  DHS_1 ->DHS_84  DHS_1 ->DHS_109
     ##  [5] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_90  DHS_3 ->DHS_105
     ##  [9] DHS_4 ->DHS_13  DHS_4 ->DHS_77  DHS_5 ->DHS_110 DHS_6 ->DHS_60 
@@ -420,9 +420,9 @@ V(g)$grade
 induced_subgraph(g, which(V(g)$grade == 8))
 ```
 
-    ## IGRAPH dcb4d9e DN-- 15 58 -- 
+    ## IGRAPH 0170023 DN-- 15 58 -- 
     ## + attr: name (v/c), race (v/c), grade (v/n)
-    ## + edges from dcb4d9e (vertex names):
+    ## + edges from 0170023 (vertex names):
     ##  [1] DHS_3 ->DHS_30  DHS_3 ->DHS_32  DHS_3 ->DHS_105 DHS_26->DHS_30 
     ##  [5] DHS_26->DHS_59  DHS_26->DHS_107 DHS_30->DHS_3   DHS_30->DHS_26 
     ##  [9] DHS_30->DHS_41  DHS_30->DHS_43  DHS_30->DHS_59  DHS_30->DHS_73 
@@ -757,13 +757,13 @@ l <- layout_with_fr(g)
 head(l)
 ```
 
-    ##           [,1]      [,2]
-    ## [1,] -5.711712  5.327386
-    ## [2,] -2.232903 12.052861
-    ## [3,] -1.044963  4.654603
-    ## [4,]  1.056392  8.626779
-    ## [5,]  8.050780  8.622839
-    ## [6,] -3.987688 11.632103
+    ##            [,1]      [,2]
+    ## [1,] -3.9918994 -4.397702
+    ## [2,] -3.2761428  4.392553
+    ## [3,]  0.2094077 -2.803142
+    ## [4,] -0.2490742  1.864972
+    ## [5,]  8.9410000 -1.690966
+    ## [6,] -4.4691592  3.991211
 
 #### Multiple plots, same layout
 

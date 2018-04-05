@@ -72,7 +72,7 @@ A directed network with...
 
 - The nitty gritty of network analysis in R
   - The high points and low points of the two big network packages - igraph and the statnet suite of packages
-  - Importing data
+  - Creating data
   - Manipulating data
   - Key functions from these packages
   - Visualization
@@ -130,11 +130,11 @@ as.matrix(net)[7:20, 7:20]
 as.edgelist(net)[1:10, ]
 ```
 
-### Importing and manipulating network data
+### Creating and manipulating network data
 
 #### Prepping data...
 
-```{r prepping data for importing, echo = T}
+```{r prepping data for Creating, echo = T}
 data(faux.desert.high)
 adj_matrix <- as.matrix(faux.desert.high)
 el <- as.edgelist(faux.desert.high) %>% 
@@ -157,7 +157,7 @@ el <-
   - `el` - an edgelist with the same information
   - `dhs_attr` - a data frame of student attributes 
   
-```{r data to import}
+```{r data to Create}
 glimpse(dhs_attr)
 ```
 
@@ -178,7 +178,7 @@ glimpse(dhs_attr)
 
 #### `statnet` approach
 
-```{r statnet import}
+```{r statnet Create}
 library(statnet)
 
 net <- network(adj_matrix)
@@ -186,7 +186,7 @@ net
 ```
 
 #### `statnet` approach
-```{r import with attributes}
+```{r Create with attributes}
 network(adj_matrix, 
         vertex.attr = list(dhs_attr$grade,
                            dhs_attr$race,
@@ -202,7 +202,7 @@ network(adj_matrix,
 - For adjacency matrices: `graph_from_adjacency_matrix`
 - For edgelists: `graph_from_edgelist` or `graph_from_data_frame`
 
-```{r igraph import, message = F, warning = F}
+```{r igraph Create, message = F, warning = F}
 library(igraph)
 
 g <- graph_from_adjacency_matrix(adj_matrix)
