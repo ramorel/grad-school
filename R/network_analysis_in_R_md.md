@@ -749,7 +749,7 @@ ggraph(g) +
 
 #### Layouts
 
-  - Hot tip: say the layout you want for multiple visualizations
+  - Hot tip: Save the layout you want for multiple visualizations
       - `igraph` prefix: `layout_*`
 
 <!-- end list -->
