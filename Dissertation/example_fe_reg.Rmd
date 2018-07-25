@@ -1,0 +1,221 @@
+---
+title: "Analysis of group racial theat in the anti-testing movement"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Setup - Data and libraries
+
+The data were previously imported from SQLITE databases provided by [the New York state Department of Education](https://data.nysed.gov/downloads.php) and from the Common Core of Data provided by [the National Center for Education Statistics](https://nces.ed.gov/ccd/pubschuniv.asp)
+
+```{r load data and libraries}
+library(tidyverse)
+library(plm)
+library(sandwich)
+library(lmtest)
+library(broom)
+options(scipen=0)
+
+load(here::here("/databases/ny_cleaned_data1807.RData"))
+
+# NOTE: Conflict between plm and dplyr--both have `lag` and `lead`
+```
+
+### Preparing the panel data
+
+I need to clean the data, keeping only the relevant variables and observations. Following that, I need to do some feature engineering to create overall school-level accountability data.
+
+First, I will select the relevant variables. These are variables related to testing and student demographics.
+
+```{r cleaning the data}
+ny_panel <- 
+  nydata %>% 
+  select(entity_cd:math_white_num_enroll, 
+         total_enroll:district_name,
+         county_cd:per_multi,
+         black_ccd_district, am_ccd_district,
+         asian_ccd_district, hisp_ccd_district, 
+         white_ccd_district, pacific_ccd_district,
+         matches("black|hisp|white|asian|_all"),
+         contains("total"),
+         contains("enroll"),
+         contains("partic"),
+         contains("ayp"),
+         -matches("economically|limited|disabil|multir"),
+         num_teach:per_mas_plus, 
+         type:ulocal,
+         fte:stitli,
+         member:tr,
+         per_frpl:per_non_wh08,
+         district_under18:resolution
+         ) 
+```
+Oddly, there are some duplicates. I need to remove these.
+
+```{r remove duplicates}
+ny_panel <- 
+  ny_panel %>% 
+  unite(id, entity_cd, year, remove = F) %>% 
+  filter(!duplicated(id)) %>% 
+  select(-id)
+```
+Now, I need to exclude charter schools and keep schools that are still open (`type==`), are not secondary schools (`level != 3`), and has a high grade of at least fifth grade (`gshi`).
+```{r filter data}
+ny_panel <- 
+  ny_panel %>% 
+  filter(charter != 1,
+         type == 1,
+         level != 3,
+         !gshi %in% c("02", "01",
+                      "03", "04",
+                      "KG", "PK"))
+```
+
+#### Feature engineering
+
+First, I want to determine _overall_ proficiency levels. I hypothesize that schools that experienced decreases in proficiency levels in the previous year will have more students not participarting in annual testing in the current year.
+
+There is no variable for the overall proficiency rate of a school. So I need to create it. Proficient means scoring a level 3 or 4. Non-proficient means scoring a level 1 or 2. We have the number of students scoring at each level for each grade, as well as the number of students tested. I will use these to create two variables: `ela_prof_rate` and `math_prof_rate`.
+
+```{r creating proficiency variables}
+prof_rate <- function(df, n, subject) {
+  for (i in n) {
+    varname <- paste("overall",
+                     "level", 
+                     i, i + 1, 
+                     subject,
+                     "count", 
+                     sep = "_")
+    rgx <- paste0(subject,
+                  "_(\\d)_all(\\S+)",
+                  "(", i, "|", i + 1, ")",
+                  "_count")
+    df <- mutate(df, 
+                 !!varname := 
+                   rowSums(df %>% 
+                             select(
+                               matches(rgx)),
+                           na.rm = T))
+  }
+  nc <- ncol(df)
+  varname <- paste("overall",
+                     "level", 
+                     n[1], n[1] + 1, 
+                     subject,
+                     "count", 
+                     sep = "_")
+  newname <- paste(subject,
+                   "non_prof_rate",
+                   sep = "_")
+  df <- 
+    df %>% 
+    mutate(!!newname :=
+             select(df, 
+                    one_of(!!varname)) %>% 
+             pull() / 
+             rowSums(df %>% 
+                       select((nc-1):nc),
+           na.rm = T)) %>% 
+    select(-nc, -(nc-1))
+}
+
+for (i in c("ela", "math")) {
+  ny_panel <- prof_rate(ny_panel, c(1, 3), i)
+} 
+```
+
+I believe that the geographical setting of the school may matter for the rates of non-participation, so I will use the `ulocal` variable to create a dummy variable called `suburban` and one called `urban`. And I want to relevel `ulocal` so suburban is the reference, just in case I decided to use that variable.
+
+```{r local table}
+table(ny_panel$ulocal)
+```
+
+```{r suburban variable}
+ny_panel <- 
+  ny_panel %>% 
+  mutate(suburban = ifelse(ulocal %in% c("town", "suburban"), 
+                           1, 0),
+         urban = ifelse(ulocal == "city", 
+                           1, 0)) %>% 
+  mutate(ulocal = fct_relevel(as_factor(ulocal), "suburban"))
+```
+
+The last thing I need to do is to turn the participation variables into _non-particpation_ variables. This is more intuitive for the analysis I will do.
+
+```{r non participation}
+ny_panel <-
+  ny_panel %>% 
+  rename_at(vars(ends_with("per_partic")),
+            funs(. = str_replace(., 
+                                 "(ela|math)(_[a-z]+_)(\\S+)(per_partic)$", 
+                                 "\\1\\2\\4")
+                 )
+            ) %>% 
+  mutate_at(vars(ends_with("per_partic")),
+            funs("non_partic" = 1 - .)) %>% 
+  rename_at(vars(ends_with("non_partic")),
+            funs(. = str_remove(., "per_partic_"))
+            )
+```
+
+#### Analysis
+
+
+
+First, I will establish my base model and do an old-fashioned, run of the mill OLS regression. Since the data cover several year, this is a "pooled" ols regression.
+
+```{r pooled ols}
+base_ela_model <-
+  as.formula(
+    ela_all_non_partic ~
+      per_black_hisp +
+      lag(ela_non_prof_rate) +
+      per_fewer_3yrs_exp +
+      per_mas_plus +
+      per_frpl +
+      per_lep +
+      st_ratio +
+      urban
+  )
+pooled_ela <- plm(base_ela_model,
+                  data = ny_panel %>% filter(year >= 2012),
+                  index = c("entity_cd", "year"),
+                  model = "pooling")
+summary(pooled_ela,
+        vcov = vcovHC(pooled_ela,
+                      type = "HC1"))
+```
+
+As we can see from the pooled OLS regression, schools with larger populations for black or latinx students, low income students, and English language learners had fewer students opting out of ELA testing. Urban schools had fewer students opting out than non-urban schools. Schools with more experienced teachers and larger in non-proficiency rates in the pervious year had more students opting out. These estimates are biased for all sorts of reasons, chief among them is omitted variables bias. My guess is that schools with larger populations of black or latinx students differ systematically from those with smaller populations of black or latinx students in unobserved ways.
+
+One method to deal with this is to use school fixed effects. This means that we only identify the relationship between the outcome variable and the independent variables based on changes that occur _within_ schools. This partials out any unobserved differences between schools. 
+
+```{r fixed effects}
+entity_ela <- plm(base_ela_model,
+                  data = ny_panel %>% filter(year >= 2012),
+                  index = c("entity_cd", "year"),
+                  model = "within")
+summary(entity_ela,
+        vcov = vcovHC(entity_ela,
+                      type = "HC1"))
+```
+
+Now with fixed effects included, we have a different story. The coefficients on `per_black_hisp`, `per_frpl`, and `per_lep` are now positive and significant. The coefficient on `lag(ela_non_prof_rate)` is basically the same--a bit larger, but still positive. So now we know that schools that had increases in the share of black or hispanic, low income, or English learning students had more opting out. Interesting.
+
+But there is another thing. The school fixed effects take account for unobserved variables that vary across schools but are fixed over time. There may be year to year changes that impact all schools that are relevant to our analysis. In other words, we need to account for unobserved variables that vary across years but are fixed across schools. For example, maybe New York state instituted changes to testing that increased opting out. 
+
+To address this we can include year fixed effects.
+
+```{r year fixed effects}
+year_ela <- plm(base_ela_model,
+                  data = ny_panel %>% filter(year >= 2012),
+                  index = c("entity_cd", "year"),
+                  model = "within",
+                  effect = "twoway")
+summary(year_ela,
+        vcov = vcovHC(year_ela,
+                      type = "HC1"))
+```
