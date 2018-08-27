@@ -5,7 +5,7 @@ Richard Paquin Morel
 
 ## Background and data
 
-My dissertation uses data that I cannot publicly share. So I will use a
+My project uses data that I cannot publicly share. So I will use a
 publicly available set to demonstrate this code. The `ergm` pack has a
 number of sample social networks. First, load the relevant libraries.
 
