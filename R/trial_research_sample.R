@@ -9,7 +9,7 @@ library(statnet)
 library(ggplot2)
 library(tidyverse)
 
-# My dissertation uses data that I cannot publicly share. So I will use a publicly available
+# My project uses data that I cannot publicly share. So I will use a publicly available
 # set to demonstrate this code. The `ergm` pack has a number of sample social networks.
 
 # I will use the "faux.desert.high" network, which approximates the structure the network I 
