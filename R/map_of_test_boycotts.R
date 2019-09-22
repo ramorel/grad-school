@@ -37,7 +37,7 @@ p <-
   geom_sf(aes(fill = mean_overall)) +
   scale_fill_viridis_c(name = "Mean Participation Rate", option = "plasma") +
   theme_void() +
-  labs(title = 'Year: {current_frame}') +
+  labs(title = "Mean Participation Rate", subtitle = "Year: {current_frame}") +
   transition_manual(year)
 
 animate(p, fps = 5)
@@ -68,11 +68,36 @@ p <-
   ny_cnty_cate %>% 
   ggplot() +
   geom_sf(aes(fill = cate)) +
-  scale_fill_viridis_d(name = "Mean Participation Rate", option = "plasma") +
+  scale_fill_viridis_d(name = "Mean Participation Rate", option = "plasma", direction = -1) +
   theme_void() +
-  labs(title = 'Year: {current_frame}') +
+  labs(title = "Mean Participation Rate", subtitle = "Year: {current_frame}") +
   transition_manual(year) 
 
 animate(p, fps = 5)
 
 anim_save("ny_cate.gif")
+
+
+cate_partic <-
+  partic_means %>% 
+  mutate(
+    cate = 
+      ifelse(mean_overall < 0.95, "Below 95%", "95% or above")
+  ) 
+
+ny_cnty_cate <-
+  ny_counties %>%
+  left_join(cate_partic, by = c("NAME" = "county_name"))
+
+p <- 
+  ny_cnty_cate %>% 
+  ggplot() +
+  geom_sf(aes(fill = cate)) +
+  scale_fill_viridis_d(name = "Mean Participation Rate", option = "plasma", direction = -1) +
+  theme_void() +
+  labs(title = "Mean Participation Rate", subtitle = "Year: {current_frame}") +
+  transition_manual(year) 
+
+animate(p, fps = 5)
+
+anim_save("ny_cate2.gif")

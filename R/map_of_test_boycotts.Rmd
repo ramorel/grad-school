@@ -115,7 +115,6 @@ animate(p, fps = 5)
 One more time, let's make something akin to a survival analysis. Well, not really. Let's just visualize when a county has a mean participation rate that drops below 95%.
 
 ```{r map3, message=FALSE}
-## Below X% categorical animation
 
 cate_partic <-
   partic_means %>% 
