@@ -5,6 +5,7 @@ library(sf)
 options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
+## Requires pre-cleaned data from NYS Department of Education, sorry to have to hard code this!
 load("/Users/rap168/Box Sync (RichardPaquinMorel2013@u.northwestern.edu)/Paquin-Morel Lab/dissertation_study_3/databases/ny_cleaned_data181120.RData")
 
 ## Find county-level means by year
