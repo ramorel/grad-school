@@ -8,7 +8,6 @@ library(transformr)
 
 options(tigris_use_cache = TRUE)
 
-
 va_election_dat <- 
   read_html("https://results.elections.virginia.gov/vaelections/2019%20November%20General/Site/Locality/Index.html") %>% 
   html_nodes("a") %>%
@@ -52,7 +51,7 @@ va_census <-
 va_election <- 
   left_join(va_census, va_election, by = c("NAME" = "county"))
 
-
+# Population
 va_election %>% 
   ggplot() + 
   geom_sf(aes(geometry = geometry, fill = estimate)) + 
@@ -63,8 +62,8 @@ va_election <-
   va_election %>% 
   st_transform(3395)
 
+# Election results
 va_election %>% 
-  st_transform(3395) %>% 
   ggplot() + 
   geom_sf(aes(geometry = geometry, fill = winner)) + 
   scale_fill_manual(values = c("blue", "gray","red")) +
@@ -75,28 +74,25 @@ va_election_cart <-
   st_transform(3395) %>%  
   cartogram_dorling("estimate")
 
-va_election_cart$id <- seq(1,nrow(va_election_cart))
-va_election$id <- seq(1,nrow(va_election))
-
-data <- rbind(va_election, va_election_cart, va_election)
-
-data$ease <- "cubic-in-out"
-data$time <- rep(c(1:3), each=nrow(va_election))
-
-dt <- tween_elements(data, time='time', group='id', ease='ease', nframes = 30)
-
 morph <- tween_sf(va_election, va_election_cart,
                   ease = 'linear',
                   exit = va_election_cart,
-                  nframes = 30)
+                  nframes = 50)
 
-end <- morph %>% filter(.frame == 30)
+# Let that last frame repeat a few times -- probably a better way to do this
+end <- morph %>% filter(.frame == 50)
 
 morph <- 
   morph %>% 
-  rbind(end %>% mutate(.frame = 31)) %>% 
-  rbind(end %>% mutate(.frame = 32)) %>% 
-  rbind(end %>% mutate(.frame = 33))
+  rbind(end %>% mutate(.frame = 51)) %>% 
+  rbind(end %>% mutate(.frame = 52)) %>% 
+  rbind(end %>% mutate(.frame = 53)) %>% 
+  rbind(end %>% mutate(.frame = 54)) %>% 
+  rbind(end %>% mutate(.frame = 55)) %>% 
+  rbind(end %>% mutate(.frame = 56)) %>% 
+  rbind(end %>% mutate(.frame = 57)) %>% 
+  rbind(end %>% mutate(.frame = 58)) %>% 
+  rbind(end %>% mutate(.frame = 59))
 
 p <- 
   ggplot() + 
