@@ -77,22 +77,22 @@ va_election_cart <-
 morph <- tween_sf(va_election, va_election_cart,
                   ease = 'linear',
                   exit = va_election_cart,
-                  nframes = 50)
+                  nframes = 75)
 
 # Let that last frame repeat a few times -- probably a better way to do this
-end <- morph %>% filter(.frame == 50)
+end <- morph %>% filter(.frame == 75)
 
 morph <- 
   morph %>% 
-  rbind(end %>% mutate(.frame = 51)) %>% 
-  rbind(end %>% mutate(.frame = 52)) %>% 
-  rbind(end %>% mutate(.frame = 53)) %>% 
-  rbind(end %>% mutate(.frame = 54)) %>% 
-  rbind(end %>% mutate(.frame = 55)) %>% 
-  rbind(end %>% mutate(.frame = 56)) %>% 
-  rbind(end %>% mutate(.frame = 57)) %>% 
-  rbind(end %>% mutate(.frame = 58)) %>% 
-  rbind(end %>% mutate(.frame = 59))
+  rbind(end %>% mutate(.frame = 76)) %>% 
+  rbind(end %>% mutate(.frame = 77)) %>% 
+  rbind(end %>% mutate(.frame = 78)) %>% 
+  rbind(end %>% mutate(.frame = 79)) %>% 
+  rbind(end %>% mutate(.frame = 80)) %>% 
+  rbind(end %>% mutate(.frame = 81)) %>% 
+  rbind(end %>% mutate(.frame = 82)) %>% 
+  rbind(end %>% mutate(.frame = 83)) %>% 
+  rbind(end %>% mutate(.frame = 84))
 
 p <- 
   ggplot() + 
@@ -102,6 +102,6 @@ p <-
   coord_sf() +
   transition_manual(.frame) 
 
-animate(p, fps = 30)
+animate(p, fps = 25)
 
 anim_save("va_election.gif")
