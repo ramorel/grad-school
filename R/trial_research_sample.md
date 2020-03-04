@@ -1,13 +1,16 @@
-Trial research qualifying paper - sample data
+Qualifying paper with Toy Data
 ================
 Richard Paquin Morel
 1/30/2018
 
 ## Background and data
 
-My project uses data that I cannot publicly share. So I will use a
-publicly available set to demonstrate this code. The `ergm` pack has a
-number of sample social networks. First, load the relevant libraries.
+My qualifying paper uses data that I cannot publicly share. (It is now
+published
+[here](https://journals.sagepub.com/doi/full/10.3102/0002831218788528)).
+So I will use a publicly available set to demonstrate this code. The
+`ergm` pack has a number of sample social networks. First, load the
+relevant libraries.
 
 ``` r
 library(statnet)
@@ -106,8 +109,7 @@ unconnected nodes.
 
 For this network, I will use grade as the grouping variable for
 measuring brokerage. For my actual study, I used membership in an
-organizational
-sector.
+organizational sector.
 
 ``` r
 brkrg <- brokerage(faux.desert.high, faux.desert.high %v% "grade")$raw.nli
@@ -153,7 +155,12 @@ model <- ergm(faux.desert.high ~ edges + mutual +
                     gwesp(0.1, T) + 
                     gwdsp(0.1, T) +
                     nodematch("grade"))
-        
+```
+
+    ## Warning: `set_attrs()` is deprecated as of rlang 0.3.0
+    ## This warning is displayed once per session.
+
+``` r
 summary(model)
 ```
 
@@ -168,20 +175,20 @@ summary(model)
     ## Iterations:  2 out of 20 
     ## 
     ## Monte Carlo MLE Results:
-    ##                 Estimate Std. Error MCMC %  p-value    
-    ## edges           -4.47763    0.17632      0  < 1e-04 ***
-    ## mutual           1.72722    0.18177      0  < 1e-04 ***
-    ## intransitive     0.04670    0.01211      0 0.000115 ***
-    ## gwesp.fixed.0.1  1.21966    0.10338      0  < 1e-04 ***
-    ## gwdsp.fixed.0.1 -0.10789    0.01913      0  < 1e-04 ***
-    ## nodematch.grade  1.25626    0.12238      0  < 1e-04 ***
+    ##                 Estimate Std. Error MCMC % z value Pr(>|z|)    
+    ## edges           -4.52314    0.16964      0 -26.664  < 1e-04 ***
+    ## mutual           1.69735    0.17561      0   9.666  < 1e-04 ***
+    ## intransitive     0.04683    0.01251      0   3.744 0.000181 ***
+    ## gwesp.fixed.0.1  1.21012    0.10607      0  11.408  < 1e-04 ***
+    ## gwdsp.fixed.0.1 -0.10037    0.01996      0  -5.028  < 1e-04 ***
+    ## nodematch.grade  1.28933    0.11981      0  10.762  < 1e-04 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ##      Null Deviance: 15723  on 11342  degrees of freedom
-    ##  Residual Deviance:  2626  on 11336  degrees of freedom
+    ##  Residual Deviance:  2625  on 11336  degrees of freedom
     ##  
-    ## AIC: 2638    BIC: 2682    (Smaller is better.)
+    ## AIC: 2637    BIC: 2681    (Smaller is better.)
 
 After specifying and estimating the model, it is critical to assess its
 fit to the data and to diagnose any issues in the Markov Chain Monte
@@ -227,6 +234,9 @@ model_tridist %>%
   geom_vline(xintercept = summary(faux.desert.high ~ triangle))
 ```
 
+    ## Warning: `as_data_frame()` is deprecated, use `as_tibble()` (but mind the new semantics).
+    ## This warning is displayed once per session.
+
 ![](trial_research_sample_files/figure-gfm/model%20goodness-of-fit%20for%20other%20statistics-1.png)<!-- -->
 
 Ok, not too bad. Let’s see where the observed value falls in the
@@ -236,7 +246,7 @@ distribution.
 ecdf(model_tridist)(summary(faux.desert.high ~ triangle))
 ```
 
-    ## [1] 0.307
+    ## [1] 0.22
 
 Now I can proceed with the brokerage test. Here’s the basic process:
 
@@ -295,12 +305,12 @@ head(dist[[1]])
     ## # Groups:   grade [1]
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int>
-    ## 1 18.0   0    13.0   7.00  2.00 40.0      7
-    ## 2 50.0   0     9.00  0     0    59.0      7
-    ## 3  5.00  0     0     4.00  0     9.00     7
-    ## 4 26.0   0     6.00  6.00  1.00 39.0      7
-    ## 5 20.0   1.00  7.00  6.00  0    34.0      7
-    ## 6  8.00  0     0     0     0     8.00     7
+    ## 1     3     0     2    11     1    17     7
+    ## 2    40     0     9    12     1    62     7
+    ## 3    41     0     0     9     0    50     7
+    ## 4     7     3     5    14     2    31     7
+    ## 5     2     0     0     7     0     9     7
+    ## 6    22     0     5    13     2    42     7
 
 ``` r
 head(obs[[1]])
@@ -309,12 +319,12 @@ head(obs[[1]])
     ## # A tibble: 6 x 8
     ##     w_I   w_O  b_IO  b_OI   b_O     t grade id   
     ##   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <int> <chr>
-    ## 1 44.0      0 14.0   0     0     58.0     7 7    
-    ## 2 34.0      0 13.0   0     0     47.0     7 12   
-    ## 3 20.0      0  0     6.00  0     26.0     7 15   
-    ## 4  9.00     0  3.00  6.00  1.00  19.0     7 19   
-    ## 5 11.0      0  0     0     0     11.0     7 24   
-    ## 6 29.0      0 16.0   5.00  0     50.0     7 34
+    ## 1    44     0    14     0     0    58     7 7    
+    ## 2    34     0    13     0     0    47     7 12   
+    ## 3    20     0     0     6     0    26     7 15   
+    ## 4     9     0     3     6     1    19     7 19   
+    ## 5    11     0     0     0     0    11     7 24   
+    ## 6    29     0    16     5     0    50     7 34
 
 Let’s continue to explore by comparing some observed scores to the
 simulated distributions.
@@ -385,12 +395,12 @@ head(b_scores)
 ```
 
     ##   id Coordinator Consultant Representative Gatekeeper Liaison Total
-    ## 1  7       0.145          1          0.153      1.000   1.000 0.204
-    ## 2 12       0.280          1          0.173      1.000   1.000 0.311
-    ## 3 15       0.528          1          1.000      0.454   1.000 0.626
-    ## 4 19       0.787          1          0.582      0.454   0.357 0.730
-    ## 5 24       0.749          1          1.000      1.000   1.000 0.860
-    ## 6 34       0.353          1          0.128      0.511   1.000 0.280
+    ## 1  7       0.154          1          0.182      1.000   1.000 0.221
+    ## 2 12       0.275          1          0.193      1.000   1.000 0.327
+    ## 3 15       0.512          1          1.000      0.459   1.000 0.637
+    ## 4 19       0.786          1          0.602      0.459   0.385 0.748
+    ## 5 24       0.738          1          1.000      1.000   1.000 0.862
+    ## 6 34       0.351          1          0.140      0.515   1.000 0.298
 
 So those are all percentile ranks for each node’s brokerage score in
 each role. We have to choose an alpha as the cutoff for significance. In
@@ -403,13 +413,27 @@ brokers <- b_scores %>%
   transmute(id = as.numeric(id), 
             broker = if_else(rowSums(select(., Coordinator:Total)) == 0, 0, 1)) %>% 
   arrange(id)
+```
 
+    ## Warning: funs() is soft deprecated as of dplyr 0.8.0
+    ## Please use a list of either functions or lambdas: 
+    ## 
+    ##   # Simple named list: 
+    ##   list(mean = mean, median = median)
+    ## 
+    ##   # Auto named with `tibble::lst()`: 
+    ##   tibble::lst(mean, median)
+    ## 
+    ##   # Using lambdas
+    ##   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
+    ## This warning is displayed once per session.
+
+``` r
 faux.desert.high %v% "broker" <- brokers$broker
 ```
 
 Let’s take a look at here those brokers are. I’m going to increase the
-size of broker nodes so that they are easy to
-spot.
+size of broker nodes so that they are easy to spot.
 
 ``` r
 faux.desert.high %v% "size" <- if_else(faux.desert.high %v% "broker" == 1, 5, 1)
@@ -474,7 +498,7 @@ brokers %>%
     ## # A tibble: 2 x 3
     ##   broker mean_range sd_range
     ##    <dbl>      <dbl>    <dbl>
-    ## 1   0         0.448    0.229
-    ## 2   1.00      0.619    0.204
+    ## 1      0      0.461    0.230
+    ## 2      1      0.581    0.240
 
 Indeed the brokers have greater mean range scores.
