@@ -46,10 +46,10 @@ par(mfrow=c(2,2))
 plot(madm.gof)
 dev.off()
 
-sim.m1 <- simulate(mad.model, 
+sim.m1 <- simulate(model, 
                    nsim=1000,
                    seed=475670,
-                   basis=mathad),
+                   basis=faux.desert.high),
 control=control.simulate.ergm(MCMC.burnin=10000, 
                               MCMC.interval=10000))
 
