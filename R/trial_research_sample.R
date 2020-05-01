@@ -49,9 +49,9 @@ dev.off()
 sim.m1 <- simulate(model, 
                    nsim=1000,
                    seed=475670,
-                   basis=faux.desert.high),
-control=control.simulate.ergm(MCMC.burnin=10000, 
-                              MCMC.interval=10000))
+                   basis=faux.desert.high,
+                   control=control.simulate.ergm(MCMC.burnin=10000, 
+                                                 MCMC.interval=10000))
 
 model.intrans <- sapply(1:1000, function(x) summary(sim.m1[[x]] ~ intransitive))
 model.densdist <- sapply(1:1000, function(x) gden(sim.m1[[x]]))
